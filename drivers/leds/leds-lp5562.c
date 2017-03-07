@@ -478,6 +478,26 @@ static ssize_t lp5562_store_engine_mux(struct device *dev,
 	return len;
 }
 
+static ssize_t lp5562_write_sram(struct file *filp, struct kobject *kobj,
+				 struct bin_attribute *attr, char *buf,
+				 loff_t offset, size_t size)
+{
+	struct device *dev = container_of(kobj, struct device, kobj);
+	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
+	struct lp55xx_chip *chip = led->chip;
+
+	/*
+	 * Program momery sequence
+	 *  1) set engine mode to "LOAD"
+	 *  2) write binary data into program memory
+	 */
+
+	lp5562_load_engine(chip);
+	lp5562_update_firmware(chip, buf, size);
+
+	return size;
+}
+
 static LP55XX_DEV_ATTR_WO(led_pattern, lp5562_store_pattern);
 static LP55XX_DEV_ATTR_WO(engine_mux, lp5562_store_engine_mux);
 
@@ -489,6 +509,15 @@ static struct attribute *lp5562_attributes[] = {
 
 static const struct attribute_group lp5562_group = {
 	.attrs = lp5562_attributes,
+};
+
+static struct bin_attribute lp5562_sram = {
+	.attr	= {
+		.name = "sram",
+		.mode = S_IWUSR,
+	},
+	.size	= LP5562_PROGRAM_LENGTH * LP55XX_ENGINE_MAX,
+	.write	= lp5562_write_sram,
 };
 
 /* Chip specific configurations */
@@ -508,6 +537,7 @@ static struct lp55xx_device_config lp5562_cfg = {
 	.run_engine         = lp5562_run_engine,
 	.firmware_cb        = lp5562_firmware_loaded,
 	.dev_attr_group     = &lp5562_group,
+	.sram               = &lp5562_sram,
 };
 
 static int lp5562_probe(struct i2c_client *client,

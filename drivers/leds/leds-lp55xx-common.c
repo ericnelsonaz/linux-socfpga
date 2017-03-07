@@ -245,7 +245,7 @@ static ssize_t lp55xx_store_engine_select(struct device *dev,
 	struct lp55xx_led *led = i2c_get_clientdata(to_i2c_client(dev));
 	struct lp55xx_chip *chip = led->chip;
 	unsigned long val;
-	int ret;
+	int ret = 0;
 
 	if (kstrtoul(buf, 0, &val))
 		return -EINVAL;
@@ -258,7 +258,11 @@ static ssize_t lp55xx_store_engine_select(struct device *dev,
 	case LP55XX_ENGINE_3:
 		mutex_lock(&chip->lock);
 		chip->engine_idx = val;
-		ret = lp55xx_request_firmware(chip);
+
+		/* SRAM is preferred, FW interface will be deprecated */
+		if (!chip->cfg->sram)
+			ret = lp55xx_request_firmware(chip);
+
 		mutex_unlock(&chip->lock);
 		break;
 	default:
@@ -514,18 +518,24 @@ int lp55xx_register_sysfs(struct lp55xx_chip *chip)
 {
 	struct device *dev = &chip->cl->dev;
 	struct lp55xx_device_config *cfg = chip->cfg;
-	int ret;
+	int ret = 0;
 
-	if (!cfg->run_engine || !cfg->firmware_cb)
-		goto dev_specific_attrs;
+	if (cfg->run_engine && cfg->firmware_cb) {
+		ret = sysfs_create_group(&dev->kobj, &lp55xx_engine_attr_group);
+		if (ret)
+			return ret;
+	}
 
-	ret = sysfs_create_group(&dev->kobj, &lp55xx_engine_attr_group);
-	if (ret)
-		return ret;
+	if (cfg->dev_attr_group) {
+		ret = sysfs_create_group(&dev->kobj, cfg->dev_attr_group);
+		if (ret)
+			return ret;
+	}
 
-dev_specific_attrs:
-	return cfg->dev_attr_group ?
-		sysfs_create_group(&dev->kobj, cfg->dev_attr_group) : 0;
+	if (cfg->sram)
+		ret = sysfs_create_bin_file(&dev->kobj, cfg->sram);
+
+	return ret;
 }
 EXPORT_SYMBOL_GPL(lp55xx_register_sysfs);
 
@@ -533,6 +543,9 @@ void lp55xx_unregister_sysfs(struct lp55xx_chip *chip)
 {
 	struct device *dev = &chip->cl->dev;
 	struct lp55xx_device_config *cfg = chip->cfg;
+
+	if (cfg->sram)
+		sysfs_remove_bin_file(&dev->kobj, cfg->sram);
 
 	if (cfg->dev_attr_group)
 		sysfs_remove_group(&dev->kobj, cfg->dev_attr_group);

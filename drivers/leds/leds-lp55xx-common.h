@@ -100,6 +100,7 @@ struct lp55xx_reg {
  * @firmware_cb        : Call function when the firmware is loaded
  * @run_engine         : Run internal engine for pattern
  * @dev_attr_group     : Device specific attributes
+ * @sram               : Binary attributes for internal SRAM of LP55xx device
  */
 struct lp55xx_device_config {
 	const struct lp55xx_reg reset;
@@ -123,6 +124,8 @@ struct lp55xx_device_config {
 
 	/* additional device specific attributes */
 	const struct attribute_group *dev_attr_group;
+
+	struct bin_attribute *sram;
 };
 
 /*
