@@ -726,6 +726,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) += \
 	socfpga_cyclone5_sodia.dtb \
 	socfpga_cyclone5_trcom.dtb \
 	socfpga_cyclone5_vining_fpga.dtb \
+	socfpga_cmv8000_eldim.dtb \
 	socfpga_mitysom5csx_devkit.dtb \
 	socfpga_mitysom5csx-h6-4ya_devkit.dtb \
 	socfpga_mitysom5cse_devkit.dtb \
