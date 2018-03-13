@@ -19,9 +19,13 @@
 #include "mitysom_a10s_dsc.dtsi"
 
 &i2c1 {
-	/* status = "okay"; */
+	status = "okay";
 
 	/* USB IO Tri-Color LED */
+	led@62 {
+		compatible = "nxp,pca9553";
+		reg = <0x62>;
+	};
 
 	/* Sensor board */
 
