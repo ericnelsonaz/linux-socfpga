@@ -22,7 +22,7 @@
 	compatible = "altr,socfpga-arria10", "altr,socfpga";
 
 	aliases {
-		ethernet0 = &gmac0;
+		ethernet0 = &gmac1;
 		serial0 = &uart1;
 	};
 
@@ -160,6 +160,6 @@
 };
 
 &usbphy0 {
-	reset-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;
+	reset-gpios = <&porta 9 GPIO_ACTIVE_LOW>;
 };
 
