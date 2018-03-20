@@ -18,6 +18,62 @@
 /dts-v1/;
 #include "mitysom_a10s_dsc.dtsi"
 
+/ {
+	soc {
+		hps_lw_bus: bus@0ff200000 {
+			compatible = "simple-bus";
+			reg = <0xFF200000 0x00200000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0x0 0xFF200000 0x00200000>;
+			status = "okay";
+
+			sysid_qsys: sysid@0000 {
+				compatible = "altr,sysid-1.0";
+				reg = <0x000000 0x08>;
+			};
+
+			/* 40 is zero */
+			cmv50000_pio_outs: gpio@1000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00001000 0x10>;
+				altr,ngpio = <4>;
+				interrupts = <0 48 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+			};
+
+			cmv50000_pio_ins: gpio@2000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00002000 0x10>;
+				altr,ngpio = <4>;
+				interrupts = <0 47 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+			};
+
+		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+	/* CMV50K SPI interface */
+	spidev@0 {
+		compatible = "cmosis,cmv50000";
+		spi-max-frequency = <1000000>;
+		reg = <0>;
+	};
+
+};
+
 &i2c1 {
 	status = "okay";
 
