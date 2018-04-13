@@ -595,7 +595,10 @@
 			#size-cells = <0>;
 			reg = <0xffda4000 0x100>;
 			interrupts = <0 101 IRQ_TYPE_LEVEL_HIGH>;
-			num-chipselect = <4>;
+			/* num-chipselect = <4>; */
+			resets = <&rst SPIM0_RESET>;
+			reset-names = "spim0";
+			num-cs = <4>;
 			bus-num = <0>;
 			tx-dma-channel = <&pdma 16>;
 			rx-dma-channel = <&pdma 17>;
@@ -609,8 +612,11 @@
 			#size-cells = <0>;
 			reg = <0xffda5000 0x100>;
 			interrupts = <0 102 IRQ_TYPE_LEVEL_HIGH>;
-			num-chipselect = <4>;
+			/* num-chipselect = <4>; */
+			num-cs = <4>;
 			bus-num = <1>;
+			resets = <&rst SPIM1_RESET>;
+			reset-names = "spim1";
 			tx-dma-channel = <&pdma 20>;
 			rx-dma-channel = <&pdma 21>;
 			clocks = <&spi_m_clk>;
