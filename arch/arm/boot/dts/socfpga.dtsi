@@ -96,7 +96,6 @@
 		base_fpga_region: base-fpga-region {
 			compatible = "fpga-region";
 			fpga-mgr = <&fpgamgr0>;
-
 			#address-cells = <0x1>;
 			#size-cells = <0x1>;
 		};
@@ -881,6 +880,13 @@
 			status = "okay";
 		};
 
+		usbphy1: usbphy@1 {
+			#phy-cells = <0>;
+			compatible = "usb-nop-xceiv";
+			reset-gpio = <&porta 9 2>;
+			status = "okay";
+		};
+
 		usb0: usb@ffb00000 {
 			compatible = "snps,dwc2";
 			reg = <0xffb00000 0xffff>;
@@ -902,7 +908,7 @@
 			clock-names = "otg";
 			resets = <&rst USB1_RESET>;
 			reset-names = "dwc2";
-			phys = <&usbphy0>;
+			phys = <&usbphy1>;
 			phy-names = "usb2-phy";
 			status = "disabled";
 		};

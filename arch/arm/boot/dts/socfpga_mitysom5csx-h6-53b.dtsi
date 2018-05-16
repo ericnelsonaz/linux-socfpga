@@ -1,0 +1,34 @@
+#include "socfpga_mitysom5csx.dtsi"
+
+/{
+	memory {
+		name = "memory";
+		device_type = "memory";
+		reg = <0x0 0x80000000>; /* 2 GB  */
+	};
+};
+
+&qspi {
+	status = "okay";
+	flash1: nor@1 {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		compatible = "n25q256";
+		reg = <1>;      /* chip select */
+		spi-max-frequency = <108000000>;
+		m25p,fast-read;
+		cdns,page-size = <256>;
+		cdns,block-size = <16>; /* 2^16, 64KB */
+		cdns,read-delay = <4>;  /* delay value in read data capture register */
+		cdns,tshsl-ns = <50>;
+		cdns,tsd2d-ns = <50>;
+		cdns,tchsh-ns = <4>;
+		cdns,tslch-ns = <4>;
+
+		partition@0 {
+			/* 32MB for raw data. */
+			label = "Data";
+			reg = <0x0 0x2000000>;
+		};
+	};
+};
