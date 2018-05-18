@@ -214,6 +214,36 @@ static const struct dwc2_core_params params_amlogic = {
 	.hibernation			= -1,
 };
 
+static const struct dwc2_core_params params_dwc2_vbus_ext = {
+       .otg_cap                        = -1,
+       .otg_ver                        = -1,
+       .dma_enable                     = -1,
+       .dma_desc_enable                = -1,
+       .speed                          = -1,
+       .enable_dynamic_fifo            = -1,
+       .en_multiple_tx_fifo            = -1,
+       .host_rx_fifo_size              = -1,
+       .host_nperio_tx_fifo_size       = -1,
+       .host_perio_tx_fifo_size        = -1,
+       .max_transfer_size              = -1,
+       .max_packet_count               = -1,
+       .host_channels                  = -1,
+       .phy_type                       = -1,
+       .phy_utmi_width                 = -1,
+       .phy_ulpi_ddr                   = -1,
+       .phy_ulpi_ext_vbus              = DWC2_PHY_ULPI_EXTERNAL_VBUS, /* Enable external VBUS supply */
+       .i2c_enable                     = -1,
+       .ulpi_fs_ls                     = -1,
+       .host_support_fs_ls_low_power   = -1,
+       .host_ls_low_power_phy_clk      = -1,
+       .ts_dline                       = -1,
+       .reload_ctl                     = -1,
+       .ahbcfg                         = -1,
+       .uframe_sched                   = -1,
+       .external_id_pin_ctl	       = -1,
+       .hibernation		       = -1,
+};
+
 /*
  * Check the dr_mode against the module configuration and hardware
  * capabilities.
@@ -470,6 +500,8 @@ static int dwc2_lowlevel_hw_init(struct dwc2_hsotg *hsotg)
 	return 0;
 }
 
+
+
 /**
  * dwc2_driver_remove() - Called when the DWC_otg core is unregistered with the
  * DWC_otg driver
@@ -527,6 +559,7 @@ static const struct of_device_id dwc2_of_match_table[] = {
 	{ .compatible = "rockchip,rk3066-usb", .data = &params_rk3066 },
 	{ .compatible = "lantiq,arx100-usb", .data = &params_ltq },
 	{ .compatible = "lantiq,xrx200-usb", .data = &params_ltq },
+	{ .compatible = "snps,dwc2-vbus-ext", .data = &params_dwc2_vbus_ext },
 	{ .compatible = "snps,dwc2", .data = NULL },
 	{ .compatible = "samsung,s3c6400-hsotg", .data = NULL},
 	{ .compatible = "amlogic,meson8b-usb", .data = &params_amlogic },
