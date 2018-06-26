@@ -116,7 +116,7 @@
 	status = "okay";
 };
 &usbphy0 {
-	reset-gpios = <&porta 9 GPIO_ACTIVE_LOW>; 
+	reset-gpios = <&porta 9 GPIO_ACTIVE_HIGH>; 
 };
 
 

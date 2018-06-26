@@ -75,6 +75,9 @@
 	rxdv-skew-ps = <420>; /* 0ps */
 	rxc-skew-ps = <1680>; /* 780ps */
 	max-frame-size = <3800>;
+	snps,reset-gpio = <&porta 1 GPIO_ACTIVE_LOW>; 			
+	snps,reset-delays-us = <0 10000 1000000>;
+	snps,reset-active-low;
 	status = "okay";
 };
 
