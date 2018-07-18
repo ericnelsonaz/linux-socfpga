@@ -95,9 +95,21 @@
 	};
 
 	/* OnBoard Abracon RTC */
-	rtc@69 {
+	/* this is only on -1 prototypes */
+	/* rtc@69 { 
 		compatible = "abracon,ab1805";
 		reg = <0x69>;
+	}; */
+
+	/* On-board Abracon RTC (-2 production variants) */
+	rtc@32 {
+		compatible = "abracon,abmkt3";
+		reg = <0x32>;
+		/*
+		Temperature compensation interval
+		0 (Default) = 0.5 sec, 1 = 2 sec, 2 = 10 sec, 3 = 30 sec
+		temp-interval = <0>;
+		*/
 	};
 
 	/* OnBoard Temp Sensor (this may just get probed / detected) */
