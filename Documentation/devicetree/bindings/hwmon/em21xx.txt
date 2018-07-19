@@ -1,0 +1,7 @@
+* Intel EM21XX PowerSoC
+
+Required node properties:
+- compatible: should be:
+		"intel,em21xx"
+
+- reg: I2C bus address of the device
