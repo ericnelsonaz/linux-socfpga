@@ -91,11 +91,7 @@
 	rtc@32 {
 		compatible = "abracon,abmkt3";
 		reg = <0x32>;
-		/*
-		Temperature compensation interval
-		0 (Default) = 0.5 sec, 1 = 2 sec, 2 = 10 sec, 3 = 30 sec
 		temp-interval = <0>;
-		*/
 	};
 
 };

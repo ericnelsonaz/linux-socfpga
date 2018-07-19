@@ -1,0 +1,18 @@
+Abracon ABMKT3 I2C RTC/Alarm chip
+
+Required properties:
+
+ - "compatible": should be:
+        "abracon,abmkt3"
+ - "reg": I2C bus address of the device
+
+Optional properties:
+
+The abmkt3 has temperature compensation. Specify the temperature compensation
+interval. Higher interval will consume more power.
+
+ - "temp-interval": Temperature compensation interval
+ 	0: (Default) 0.5 seconds
+	1: 2 seconds
+	2: 10 seconds
+	3: 30 seconds
