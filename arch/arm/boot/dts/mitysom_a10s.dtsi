@@ -81,12 +81,11 @@
 	};
 
 	/* On-board Power Monitor EM2140 */
-/* TODO: Add support
 	pwmon@40 {
-		compatible = "";
+		compatible = "intel,em21xx";
 		reg = <0x40>;
 	};
-*/
+
 	/* On-board Abracon RTC */
 	rtc@32 {
 		compatible = "abracon,abmkt3";
