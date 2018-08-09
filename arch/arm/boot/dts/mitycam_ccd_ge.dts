@@ -20,8 +20,8 @@
 #include <dt-bindings/interrupt-controller/irq.h>
 
 / {
-	model = "MityCAM-C8000-U3V";
-	compatible = "cl,mitycam-cmv8000-u3v", "altr,socfpga-cyclone5", "altr,socfpga";
+	model = "MityCAM-CCD-GX";
+	compatible = "cl,mitycam-ccd-ge", "altr,socfpga-cyclone5", "altr,socfpga";
 
 	chosen {
 		bootargs = "console=ttyS0,115200 root=/dev/mmcblk0p2 rw rootwait";
@@ -244,6 +244,10 @@
 			compatible = "uio,irq";
 			interrupts = <0 41 4>;
 		};
+
+		gmac1: ethernet@ff702000 {
+			status = "okay";
+		};
 	};
 
 };
@@ -267,7 +271,7 @@
 	/* on SOM */
 	rtc@69 {
 		device_type = "rtc";
-		compatible = "abracon,ab1803";
+		compatible = "abracon,ab1805";
 		reg = <0x69>;
 	};
 };
