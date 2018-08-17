@@ -156,30 +156,6 @@
 			};
 		};
 
-		clspi: spi@ff201000 {
-			compatible = "cl,spi-1.0";
-                        #address-cells = <1>;
-			#size-cells = <0>;
-			reg = <0xff201000 0x0100>;
-			interrupts = <0 42 4>;
-			master-ref-clk = <50000000>;
-			num-chipselect = <8>;
-			bus-num = <3>;
-
-			spidev@1 {
-				spi-max-frequency = <2000000>;
-				reg = <0>;
-				compatible = "linux,spidev";
-			};
-		};
-
-		sldhub: debugger {
-			#address-cells = <1>;
-			#size-cells = <1>;
-			compatible = "altr,sld-hub";
-			reg = <0xFF221000 0x80>;
-		};
-
 		timer0@ffc08000 {
 			clock-frequency = <100000000>;
 		};
@@ -220,24 +196,12 @@
 		gpio@ff709000 {
 			status = "okay";
 			portb: gpio-controller@0 {
-				gpio-line-names = "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "AVDD_EN";
+				gpio-line-names = "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "";
 			};
 		};
 
 		gpio@ff70a000 {
 			status = "okay";
-		};
-
-
-		gpio3: gpio@ff220000 {
-			compatible = "cl,camio-1.0";
-			reg = <0xff220000 0x20>;
-			interrupts = <0 40 4>;
-			virtual_irq_start = <342>;
-			interrupt-controller;
-			#interrupt-cells = <2>;
-			gpio-controller;
-			#gpio-cells = <2>;
 		};
 
 		streamer0: streamer@20000000 {
@@ -247,6 +211,62 @@
 
 		gmac1: ethernet@ff702000 {
 			status = "okay";
+		};
+
+		hps_lw_bus: bus@0ff200000 {
+			compatible = "simple-bus";
+			reg = <0xFF200000 0x00200000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0x0 0xFF200000 0x00200000>;
+			status = "okay";
+
+			sysid_qsys: sysid@0000 {
+				compatible = "altr,sysid-1.0";
+				reg = <0x000000 0x08>;
+			};
+
+			/* lct237816_input @01000, managed in userspace */
+			/* row_adjust      @06000, managed in userspace */
+			/* stream_to_sdram @08000, managed in userspace */
+
+			gpio3: gpio@B000 {
+				compatible = "cl,camio-1.0";
+				reg = <0x0000B000 0x20>;
+				interrupts = <0 40 4>;
+				virtual_irq_start = <342>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				gpio-line-names = "CAMIO1", "CAMIO2", "CAMIO3", "CAMIO4";
+			};
+
+			/* pixel_shift    @0e000, managed in userspace */
+			/* adc_clkout_pll @0f000, managed in userspace */
+			/* flipx          @11000, managed in userspace */
+			/* timing_gen     @12000, managed in userspace */
+			/* trigger_gen    @13000, managed in userspace */
+
+			pio_0: gpio@14000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00014000 0x20>;
+				interrupts = <0 43 4>; 
+				altr,gpio-bank-width = <32>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <1>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				gpio-line-names = "CCD_IDLE", "GAIN", "FILTERSEL", "CLKOUT_PLL_LOCKED", "RXCLK_PLL_LOCKED", "ADC_TEST_PAT";
+			};
+
+			sldhub: debugger@20000 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "altr,mm-debug-link-1.0";
+				reg = <0x00020000 0x80>;
+			};
 		};
 	};
 
