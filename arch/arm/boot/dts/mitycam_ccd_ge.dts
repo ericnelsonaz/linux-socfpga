@@ -296,3 +296,10 @@
 	};
 };
 
+&i2c1 {
+	eeprom@57 {
+		compatible = "microchip,24c128";
+		reg = <0x57>;
+	};
+};
+
