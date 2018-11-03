@@ -190,17 +190,20 @@
 		};
 
 		gpio@ff708000 {
+			/* HPS_GPIO0 -> HPS_GPIO28*/
 			status = "okay";
 		};
 
 		gpio@ff709000 {
+			/* HPS_GPIO29 -> HPS_GPIO57 */
 			status = "okay";
 			portb: gpio-controller@0 {
-				gpio-line-names = "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "";
+				gpio-line-names = "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "TECDIR_COOL_HEATN" /* HPS_GPIO50 */;
 			};
 		};
 
 		gpio@ff70a000 {
+			/* HPS_GPI0 -> HPS_GPI13, GPS_GPIO58 -> HPS_GPIO66 */
 			status = "okay";
 		};
 
