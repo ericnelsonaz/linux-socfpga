@@ -1,0 +1,286 @@
+/*
+ * Copyright (C) 2014-2015 Altera Corporation <www.altera.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/dts-v1/;
+#include "mitysom_a10s_dsc.dtsi"
+
+/ {
+	aliases {
+		serial1 = &uart0;
+	};
+
+	soc {
+		hps_lw_bus: bus@0ff200000 {
+			compatible = "simple-bus";
+			reg = <0xFF200000 0x00200000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0x0 0xFF200000 0x00200000>;
+			status = "okay";
+
+			sysid_qsys: sysid@0000 {
+				compatible = "altr,sysid-1.0";
+				reg = <0x000000 0x08>;
+			};
+
+			pio_sensor_lb1: gpio@1000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00001000 0x10>;
+				altr,ngpio = <32>;
+				interrupts = <0 19 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_BOTH>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				ngpios = <32>;
+				gpio-line-names = 
+					"J1-106", /* 0 */
+					"J1-104", /* 1 */
+					"J1-102", /* 2 */
+					"J1-100", /* 3 */
+					"J1-98", /* 4 */
+					"J1-96", /* 5 */
+					"J1-94", /* 6 */
+					"J1-92", /* 7 */
+					"J1-88", /* 8 */
+					"J1-86", /* 9 */
+					"J1-84", /* 10 */
+					"J1-82", /* 11 */
+					"J1-80", /* 12 */
+					"J1-78", /* 13 */
+					"J1-76", /* 14 */
+					"J1-74", /* 15 */
+					"J1-70", /* 16 */
+					"J1-68", /* 17 */
+					"J1-66", /* 18 */
+					"J1-64", /* 19 */
+					"J1-62", /* 20 */
+					"J1-60", /* 21 */
+					"J1-58", /* 22 */
+					"J1-56", /* 23 */
+					"J1-54", /* 24 */
+					"J1-52", /* 25 */
+					"J1-48", /* 26 */
+					"J1-46", /* 27 */
+					"J1-44", /* 28 */
+					"J1-42", /* 29 */
+					"J1-40", /* 30 */
+					"J1-38"; /* 31 */
+			};
+
+			pio_sensor_lb2: gpio@2000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00002000 0x10>;
+				altr,ngpio = <32>;
+				interrupts = <0 20 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_BOTH>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				ngpios = <32>;
+				gpio-line-names =
+					"J1-36", /* 32 */
+					"J1-34", /* 33 */
+					"J1-30", /* 34 */
+					"J1-28", /* 35 */
+					"J1-26", /* 36 */
+					"J1-24", /* 37 */
+					"J1-22", /* 38 */
+					"J1-20", /* 39 */
+					"J1-18", /* 40 */
+					"J1-16", /* 41 */
+					"J1-12", /* 42 */
+					"J1-10", /* 43 */
+					"J1-6", /* 44 */
+					"J1-4", /* 45 */
+					"J1-5", /* 46 */
+					"J1-7", /* 47 */
+					"J1-9", /* 48 */
+					"J1-11", /* 49 */
+					"J1-15", /* 50 */
+					"J1-17", /* 51 */
+					"J1-19", /* 52 */
+					"J1-21", /* 53 */
+					"J1-23", /* 54 */
+					"J1-25", /* 55 */
+					"J1-27", /* 56 */
+					"J1-29", /* 57 */
+					"J1-33", /* 58 */
+					"J1-35", /* 59 */
+					"J1-39", /* 60 */
+					"J1-41", /* 61 */
+					"J1-43", /* 62 */
+					"J1-45"; /* 63 */
+			};
+
+			pio_sensor_lb3: gpio@3000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00003000 0x10>;
+				altr,ngpio = <20>;
+				interrupts = <0 21 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_BOTH>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				ngpios = <20>;
+				gpio-line-names =
+					"J1-36", /* 64 */
+					"J1-30", /* 66 */
+					"J1-28", /* 67 */
+					"J1-26", /* 68 */
+					"J1-24", /* 69 */
+					"J1-22", /* 70 */
+					"J1-20", /* 71 */
+					"J1-18", /* 72 */
+					"J1-16", /* 73 */
+					"J1-12", /* 74 */
+					"J1-10", /* 75 */
+					"J1-6", /* 76 */
+					"J1-4", /* 77 */
+					"J1-5", /* 78 */
+					"J1-7", /* 79 */
+					"J1-9", /* 80 */
+					"J1-11", /* 81 */
+					"J1-15", /* 82 */
+					"J1-17", /* 83 */
+					"J1-19"; /* 84 */
+			};
+
+			pio_powerio_lb1: gpio@4000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00004000 0x10>;
+				altr,ngpio = <32>;
+				interrupts = <0 22 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_BOTH>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				ngpios = <32>;
+				gpio-line-names =
+					"J200-21", /* 0 */
+					"J200-23", /* 1 */
+					"J200-27", /* 2 */
+					"J200-29", /* 3 */
+					"J200-31", /* 4 */
+					"J200-33", /* 5 */
+					"J200-35", /* 6 */
+					"J200-37", /* 7 */
+					"J200-39", /* 8 */
+					"J200-41", /* 9 */
+					"J200-45", /* 10 */
+					"J200-47", /* 11 */
+					"J200-51", /* 12 */
+					"J200-53", /* 13 */
+					"J200-55", /* 14 */
+					"J200-57", /* 15 */
+					"J200-59", /* 16 */
+					"J200-61", /* 17 */
+					"J200-63", /* 18 */
+					"J200-65", /* 19 */
+					"J200-66", /* 20 */
+					"J200-64", /* 21 */
+					"J200-62", /* 22 */
+					"J200-60", /* 23 */
+					"J200-58", /* 24 */
+					"J200-56", /* 25 */
+					"J200-54", /* 26 */
+					"J200-52", /* 27 */
+					"J200-48", /* 28 */
+					"J200-46", /* 29 */
+					"J200-42", /* 30 */
+					"J200-40"; /* 31 */
+			};
+
+			/* "J1-34",  65 GPIO1_14 */
+
+			pio_powerio_lb2: gpio@5000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00005000 0x10>;
+				altr,ngpio = <10>;
+				interrupts = <0 23 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_BOTH>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				ngpios = <10>;
+				gpio-line-names =
+					"J200-38", /* 32 */
+					"J200-36", /* 33 */
+					"J200-34", /* 34 */
+					"J200-32", /* 35 */
+					"J200-30", /* 36 */
+					"J200-28", /* 37 */
+					"J200-26", /* 38 */
+					"J200-24", /* 39 */
+					"J200-22", /* 40 */
+					"J200-20"; /* 41 */
+			};
+
+		};
+
+	};
+};
+
+/* sensor board and power board I2C bus */
+&i2c1 {
+	status = "okay";
+	clock-frequency = <100000>;
+        i2c-sda-hold-time-ns = <500>;
+
+};
+
+/* gpio needed for EMAC PHY reset */
+&gpio1 {
+	status = "okay";
+};
+
+&gmac1 {
+	phy-mode = "rgmii";
+	phy-addr = <0xffffffff>; /* probe for phy addr */
+
+	/*
+	 * These skews assume the user's FPGA design is adding 600ps of delay
+	 * for TX_CLK on Arria 10.
+	 *
+	 * All skews are offset since hardware skew values for the ksz9031
+	 * range from a negative skew to a positive skew.
+	 * See the micrel-ksz90x1.txt Documentation file for details.
+	 */
+	txd0-skew-ps = <0>; /* -420ps */
+	txd1-skew-ps = <0>; /* -420ps */
+	txd2-skew-ps = <0>; /* -420ps */
+	txd3-skew-ps = <0>; /* -420ps */
+	rxd0-skew-ps = <420>; /* 0ps */
+	rxd1-skew-ps = <420>; /* 0ps */
+	rxd2-skew-ps = <420>; /* 0ps */
+	rxd3-skew-ps = <420>; /* 0ps */
+	txen-skew-ps = <0>; /* -420ps */
+	txc-skew-ps = <1860>; /* 960ps */
+	rxdv-skew-ps = <420>; /* 0ps */
+	rxc-skew-ps = <1680>; /* 780ps */
+	max-frame-size = <3800>;
+	snps,reset-gpio = <&portb 23 GPIO_ACTIVE_LOW>;
+	snps,reset-delays-us = <0 10000 1000000>;
+	snps,reset-active-low;
+	status = "okay";
+};
+
