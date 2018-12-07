@@ -215,12 +215,73 @@
 
 		gpio@ff708000 {
 			status = "okay";
+			/* HPS_GPIO0 -> HPS_GPIO28*/
+			porta: gpio-controller@0 {
+				gpio-line-names = "", /* 0 */
+					"", /* 1 */
+					"", /* 2 */
+					"", /* 3 */
+					"", /* 4 */
+					"", /* 5 */
+					"", /* 6 */
+					"", /* 7 */
+					"", /* 8 */
+					"", /* 9 */
+					"", /* 10 */
+					"", /* 11 */
+					"", /* 12 */
+					"", /* 13 */
+					"", /* 14 */
+					"FX3_IO", /* 15 */
+					"", /* 16 */
+					"FX3_PRESENT", /* 17 */
+					"SENS_PRESENT", /* 18 */
+					"", /* 19 */
+					"", /* 20 */
+					"HPS_SRC", /* 21 */
+					"", /* 22 */
+					"", /* 23 */
+					"", /* 24 */
+					"", /* 25 */
+					"", /* 26 */
+					"", /* 27 */
+					"DDC_ENABLE_N"; /* 28 */
+			};
 		};
 
 		gpio@ff709000 {
 			status = "okay";
+			/* HPS_GPIO29 -> HPS_GPIO57 */
 			portb: gpio-controller@0 {
-				gpio-line-names = "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "", "AVDD_EN";
+				gpio-line-names = "", /* 29 */
+					"", /* 30 */
+					"", /* 31 */
+					"", /* 32 */
+					"", /* 33 */
+					"", /* 34 */
+					"", /* 35 */
+					"", /* 36 */
+					"", /* 37 */
+					"", /* 38 */
+					"", /* 39 */
+					"", /* 40 */
+					"", /* 41 */
+					"", /* 42 */
+					"", /* 43 */
+					"", /* 44 */
+					"", /* 45 */
+					"", /* 46 */
+					"", /* 47 */
+					"", /* 48 */
+					"", /* 49 */
+					"AVDD_EN", /* 50 */
+					"", /* 51 */
+					"", /* 52 */
+					"", /* 53 */
+					"SYS_RESN", /* 54 */
+					"", /* 55 */
+					"", /* 56 */
+					""; /* 57 */
 			};
 		};
 
@@ -233,11 +294,11 @@
 			compatible = "cl,camio-1.0";
 			reg = <0xff220000 0x20>;
 			interrupts = <0 40 4>;
-			virtual_irq_start = <342>;
 			interrupt-controller;
 			#interrupt-cells = <2>;
 			gpio-controller;
 			#gpio-cells = <2>;
+			gpio-line-names = "CAMIO1/OPTO_0", "CAMIO2/OPTO_1", "CAMIO3/OPTO_2", "CAMIO4";
 		};
 
 		streamer0: streamer@20000000 {
@@ -267,7 +328,7 @@
 	/* on SOM */
 	rtc@69 {
 		device_type = "rtc";
-		compatible = "abracon,ab1803";
+		compatible = "abracon,ab1805";
 		reg = <0x69>;
 	};
 };
