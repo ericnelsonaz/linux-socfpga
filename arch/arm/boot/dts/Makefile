@@ -701,6 +701,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) += \
 	mitycam_cmv50000_evk.dtb \
 	mitycam_cmv8000_u3v.dtb \
 	mitycam_ccd_ge.dtb \
+	mitycam_canon_3U5MGXS.dtb \
 	socfpga_arria5_socdk.dtb \
 	socfpga_arria10_socdk_nand.dtb \
 	socfpga_arria10_socdk_qspi.dtb \
