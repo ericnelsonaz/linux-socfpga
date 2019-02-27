@@ -39,33 +39,39 @@
 			};
 
 			/* (51-32)=19 is zero */
-			cmv50000_pio_outs: gpio@1000 {
+			pio_pll: gpio@1000 {
 				compatible = "altr,pio-1.0";
 				reg = <0x00001000 0x10>;
-				altr,ngpio = <4>;
-				interrupts = <0 25 4>;
+				altr,ngpio = <8>;
+				interrupts = <0 23 4>;
 				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
 				#gpio-cells = <2>;
 				gpio-controller;
 				#interrupt-cells = <1>;
 				interrupt-controller;
+				gpio-line-names = "MCLK_PLL_LOCK", "", "", "", "", "", "", "";
 			};
 
-			cmv50000_pio_ins: gpio@2000 {
+			pio_sensor: gpio@2000 {
 				compatible = "altr,pio-1.0";
 				reg = <0x00002000 0x10>;
-				altr,ngpio = <4>;
-				interrupts = <0 26 4>;
-				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				altr,ngpio = <8>;
+				#interrupts = <0 26 4>;
+				#altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
 				#gpio-cells = <2>;
 				gpio-controller;
 				#interrupt-cells = <1>;
-				interrupt-controller;
+				#interrupt-controller;
+				gpio-line-names = "PS_1.2V_EN", "PS_3.3SVDD_EN", "PS_3.3AVDDH_EN", "RESET_B", "DDC_ENABLE_N", "", "", "";
 			};
 
-			cmv50000_pio_gpio: gpio@3000 {
+			/* pll_reconfig  @04000, managed in userspace */
+			/* canon_3u5mgxs @10000, managed in userspace */
+			/* pwm           @11000, managed in userspace */
+
+			pio_fx3: gpio@14000 {
 				compatible = "altr,pio-1.0";
-				reg = <0x00003000 0x10>;
+				reg = <0x00014000 0x10>;
 				altr,ngpio = <3>;
 				interrupts = <0 24 4>;
 				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
@@ -73,19 +79,25 @@
 				gpio-controller;
 				#interrupt-cells = <1>;
 				interrupt-controller;
+				gpio-line-names = "SENS_PRESENT", "FX3_PRESENT", "FX3_IO", "", "", "", "", "";
 			};
 
-			cam_gpio: gpio@1B000 {
+			cam_gpio: gpio@16000 {
 				compatible = "cl,camio-1.0";
-				reg = <0x0001B000 0x20>;
-				interrupts = <0 21 4>;
+				reg = <0x00016000 0x20>;
+				interrupts = <0 22 4>;
 				/* virtual_irq_start = <342>; */
 				interrupt-controller;
 				#interrupt-cells = <2>;
 				gpio-controller;
 				#gpio-cells=<2>;
+				gpio-line-names = "CAMIO1", "CAMIO2", "CAMIO3", "CAMIO4";
 			};
 
+			/* stream_to_sdram @18000, managed in userspace */
+			/* sgdma           @20000, managed in userspace */
+			/* sgdma_desc      @21000, managed in userspace */
+			/* u3v_fx3         @22000, managed in userspace */
 		};
 
 		streamer0: streamer@80000000 {
