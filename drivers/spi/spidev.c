@@ -699,6 +699,7 @@ static const struct of_device_id spidev_dt_ids[] = {
 	{ .compatible = "cmosis,cmv50000" },
 	{ .compatible = "cmosis,cmv8000" },
 	{ .compatible = "cmosis,cmv300" },
+	{ .compatible = "cl,spidev" },
 	{},
 };
 MODULE_DEVICE_TABLE(of, spidev_dt_ids);

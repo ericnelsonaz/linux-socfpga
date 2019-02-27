@@ -110,13 +110,12 @@
 &spi0 {
 	status = "okay";
 
-	/* CMV50K SPI interface */
+	/* Sensor SPI interface */
 	spidev@0 {
-		compatible = "cmosis,cmv50000";
-		spi-max-frequency = <1000000>;
+		compatible = "cl,spidev";
+		spi-max-frequency = <13500000>; /* Sensor supports up to 13.5Mhz */
 		reg = <0>;
 	};
-
 };
 
 &i2c1 {
