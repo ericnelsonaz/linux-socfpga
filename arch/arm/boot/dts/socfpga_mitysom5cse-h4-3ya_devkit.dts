@@ -1,4 +1,4 @@
-#include "socfpga_mitysom5cs.dtsi"
+#include "socfpga_mitysom5cse.dtsi"
 #include <dt-bindings/interrupt-controller/irq.h>
 
 / {
