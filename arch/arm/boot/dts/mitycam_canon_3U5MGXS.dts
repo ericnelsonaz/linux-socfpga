@@ -95,6 +95,25 @@
 			};
 
 			/* stream_to_sdram @18000, managed in userspace */
+
+			clspi: spi@19000 {
+				compatible = "cl,spi-1.0";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0x00019000 0x0100>;
+				interrupts = <0 25 4>;
+				master-ref-clk = <100000000>;
+				num-chipselect = <1>;
+				bus-num = <0>;
+
+				spidev@1 {
+					compatible = "cl,spidev";
+					/* Sensor supports up to 13.5Mhz */
+					spi-max-frequency = <13500000>;
+					reg = <0>;
+				};
+			};
+
 			/* sgdma           @20000, managed in userspace */
 			/* sgdma_desc      @21000, managed in userspace */
 			/* u3v_fx3         @22000, managed in userspace */
@@ -104,17 +123,6 @@
 			compatible = "uio,irq";
 			interrupts = <0 19 4>;
 		};
-	};
-};
-
-&spi0 {
-	status = "okay";
-
-	/* Sensor SPI interface */
-	spidev@0 {
-		compatible = "cl,spidev";
-		spi-max-frequency = <13500000>; /* Sensor supports up to 13.5Mhz */
-		reg = <0>;
 	};
 };
 
