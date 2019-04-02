@@ -121,7 +121,7 @@
 
 		streamer0: streamer@80000000 {
 			compatible = "uio,irq";
-			interrupts = <0 19 4>;
+			interrupts = <0 20 4>;
 		};
 	};
 };
