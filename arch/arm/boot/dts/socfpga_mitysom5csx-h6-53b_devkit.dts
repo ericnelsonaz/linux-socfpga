@@ -127,21 +127,21 @@
 	phy-mode = "rgmii";
 	
 	txd0-skew-ps = <0>;
-        txd1-skew-ps = <0>;
-        txd2-skew-ps = <0>;
-        txd3-skew-ps = <0>;
-        rxd0-skew-ps = <420>;
-        rxd1-skew-ps = <420>;
-        rxd2-skew-ps = <420>;
-        rxd3-skew-ps = <420>;
-        txen-skew-ps = <0>;
-        txc-skew-ps = <1860>;
-        rxdv-skew-ps = <420>;
-        rxc-skew-ps = <1680>;
-
-	snps,max-mtu = <4062>;
+	txd1-skew-ps = <0>;
+	txd2-skew-ps = <0>;
+	txd3-skew-ps = <0>;
+	rxd0-skew-ps = <420>;
+	rxd1-skew-ps = <420>;
+	rxd2-skew-ps = <420>;
+	rxd3-skew-ps = <420>;
+	txen-skew-ps = <0>;
+	txc-skew-ps = <1860>;
+	rxdv-skew-ps = <420>;
+	rxc-skew-ps = <1680>;
 	
-	snps,reset-gpio = <&porta 28 1>;
+	max-frame-size = <3800>;
+		
+	snps,reset-delays-us = <0 10000 1000000>;
+	snps,reset-gpio = <&porta 28 1>; 			
 	snps,reset-active-low;
 };
-

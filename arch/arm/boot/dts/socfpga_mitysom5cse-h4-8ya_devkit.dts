@@ -132,7 +132,7 @@
 &gmac1 {
 	status = "okay";
 	phy-mode = "rgmii";
-
+	
 	txd0-skew-ps = <0>;
 	txd1-skew-ps = <0>;
 	txd2-skew-ps = <0>;
@@ -147,9 +147,8 @@
 	rxc-skew-ps = <1680>;
 	
 	max-frame-size = <3800>;
-
-	snps,max-mtu = <4062>;
-	snps,reset-gpio = <&porta 28 1>;
+		
+	snps,reset-delays-us = <0 10000 1000000>;
+	snps,reset-gpio = <&porta 28 1>; 			
 	snps,reset-active-low;
 };
-

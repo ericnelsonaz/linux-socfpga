@@ -140,7 +140,7 @@
 	
 	max-frame-size = <3800>;
 		
+	snps,reset-delays-us = <0 10000 1000000>;
 	snps,reset-gpio = <&porta 28 1>; 			
 	snps,reset-active-low;
-
 };
