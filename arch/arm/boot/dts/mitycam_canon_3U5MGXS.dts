@@ -68,6 +68,8 @@
 			/* pll_reconfig  @04000, managed in userspace */
 			/* canon_3u5mgxs @10000, managed in userspace */
 			/* pwm           @11000, managed in userspace */
+			/* sgdma_desc    @12000, managed in userspace */
+			/* sgdma_ctrl    @13000, managed in userspace */
 
 			pio_fx3: gpio@14000 {
 				compatible = "altr,pio-1.0";
@@ -82,6 +84,8 @@
 				gpio-line-names = "SENS_PRESENT", "FX3_PRESENT", "FX3_IO", "", "", "", "", "";
 			};
 
+			/* bad_pix    @15000, managed in userspace */
+
 			cam_gpio: gpio@16000 {
 				compatible = "cl,camio-1.0";
 				reg = <0x00016000 0x20>;
@@ -94,6 +98,7 @@
 				gpio-line-names = "CAMIO1", "CAMIO2", "CAMIO3", "CAMIO4";
 			};
 
+			/* pixel_shift @17000, managed in userspace */
 			/* stream_to_sdram @18000, managed in userspace */
 
 			clspi: spi@19000 {
@@ -114,8 +119,8 @@
 				};
 			};
 
-			/* sgdma           @20000, managed in userspace */
-			/* sgdma_desc      @21000, managed in userspace */
+			/* u3v_sgdma       @20000, managed in userspace */
+			/* u3v_sgdma_desc  @21000, managed in userspace */
 			/* u3v_fx3         @22000, managed in userspace */
 		};
 
