@@ -62,7 +62,7 @@
 				gpio-controller;
 				#interrupt-cells = <1>;
 				#interrupt-controller;
-				gpio-line-names = "XRESET", "", "", "", "DDC_ENABLE_N", "", "", "";
+				gpio-line-names = "XRESET", "MCLK_ENABLE", "", "", "DDC_ENABLE_N", "", "", "";
 			};
 
 			/* pll_reconfig  @04000, managed in userspace */
