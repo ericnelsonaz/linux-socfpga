@@ -554,6 +554,10 @@ static int spi_cl_setup(struct spi_device *spi)
 	if (!spi->bits_per_word)
 		spi->bits_per_word = 8;
 
+	/* Our core only supports multiples of 4 between 4-32. */
+	if (spi->bits_per_word > 32 || (spi->bits_per_word & 3) != 0)
+		return -EINVAL;
+
 	if (!spi->max_speed_hz)
 		spi->max_speed_hz = MAX_FPGA_SPI_SPEED_HZ;
 
