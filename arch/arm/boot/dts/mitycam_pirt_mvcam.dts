@@ -277,7 +277,7 @@
 				compatible = "cl,spi-1.0";
 				#address-cells = <1>;
 				#size-cells = <0>;
-				reg = <0xff200580 0x0040>;
+				reg = <0x00000580 0x0040>;
 				interrupts = <0 42 4>;
 				master-ref-clk = <66666666>;
 				num-chipselect = <8>;
