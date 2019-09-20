@@ -62,7 +62,7 @@
 				gpio-controller;
 				#interrupt-cells = <1>;
 				#interrupt-controller;
-				gpio-line-names = "PS_1.2V_EN", "PS_3.3SVDD_EN", "PS_3.3AVDDH_EN", "RESET_B", "DDC_ENABLE_N", "", "", "";
+				gpio-line-names = "PS_1.2V_EN", "PS_3.3SVDD_EN", "PS_3.3AVDDH_EN", "RESET_B", "DDC_ENABLE_N", "EXT_TRIG_EN", "", "";
 			};
 
 			/* pll_reconfig  @04000, managed in userspace */
