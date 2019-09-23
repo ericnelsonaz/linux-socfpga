@@ -135,7 +135,7 @@ static void camio_gpio_set(struct gpio_chip *gc, unsigned offset, int value)
 
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 	data_reg = readl(mm_gc->regs + CAMIO_GPIO_PCR);
-	data_reg = (data_reg & ~(3 << off)) | (value << off);
+	data_reg = (data_reg & ~(7 << off)) | (value << off);
 	writel(data_reg, mm_gc->regs + CAMIO_GPIO_PCR);
 	spin_unlock_irqrestore(&chip->gpio_lock, flags);
 }
@@ -172,7 +172,7 @@ static int camio_gpio_direction_output(struct gpio_chip *gc,
 	spin_lock_irqsave(&chip->gpio_lock, flags);
 	/* Sets the GPIO value */
 	data_reg = readl(mm_gc->regs + CAMIO_GPIO_PCR);
-	data_reg = (data_reg & ~(3 << off)) | (value << off);
+	data_reg = (data_reg & ~(7 << off)) | (value << off);
 	writel(data_reg, mm_gc->regs + CAMIO_GPIO_PCR);
 
 	/* Set pin as output, assumes software controlled IP */
@@ -299,7 +299,7 @@ static ssize_t camio_altoutput_show(struct device *dev,
 	offset = 3;
 	reg = readl(camio_gc->mmchip.regs + CAMIO_GPIO_PCR);
 	for (i = 0; i < 4; i++)
-		val[i] = ((reg & (0x3 << (i * 8 + offset)))
+		val[i] = ((reg & (0x7 << (i * 8 + offset)))
 				>> (i * 8 + offset));
 
 	status = sprintf(buf, "0x%X 0x%X 0x%X 0x%X\n", val[0], val[1], val[2],
@@ -324,7 +324,7 @@ static ssize_t camio_altoutput_store(struct device *dev,
 		for (i = 0; i < 4; i++) {
 			/* If pin was selected, set the output mux */
 			if (pins & (1 << i)) {
-				reg &= ~(0x3 << (i * 8 + offset));
+				reg &= ~(0x7 << (i * 8 + offset));
 				reg |= (select << (i * 8 + offset));
 			}
 		}
