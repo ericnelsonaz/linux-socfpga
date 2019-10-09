@@ -128,6 +128,11 @@
 			compatible = "uio,irq";
 			interrupts = <0 20 4>;
 		};
+
+		pwm0: pwm@ff211000 {
+			compatible = "uio,irq";
+			interrupts = <0 26 4>;
+		};
 	};
 };
 
