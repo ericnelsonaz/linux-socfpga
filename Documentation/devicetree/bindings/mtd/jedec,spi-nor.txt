@@ -67,7 +67,8 @@ Optional properties:
                    all chips and support for it can not be detected at runtime.
                    Refer to your chips' datasheet to check if this is supported
                    by your chip.
-
+- m25p,dual-read : Perform dual reads instead of the default of quad reads.
+                   
 Example:
 
 	flash: m25p80@0 {

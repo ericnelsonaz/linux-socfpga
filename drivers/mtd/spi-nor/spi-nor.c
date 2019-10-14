@@ -1454,6 +1454,12 @@ int spi_nor_scan(struct spi_nor *nor, const char *name, enum read_mode mode)
 		nor->flash_read = SPI_NOR_DUAL;
 	}
 
+	if (np) {
+		/* Use DUAL mode if specified by DT and the part supports it */
+		if (of_property_read_bool(np, "m25p,dual-read") && info->flags & SPI_NOR_DUAL_READ)
+			nor->flash_read = SPI_NOR_DUAL;
+	}
+
 	/* Default commands */
 	switch (nor->flash_read) {
 	case SPI_NOR_QUAD:
