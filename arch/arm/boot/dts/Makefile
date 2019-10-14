@@ -724,6 +724,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) += \
 	socfpga_mitysom5csx-h6-53b_devkit.dtb \
 	socfpga_mitysom5cse-h4-3ya_devkit.dtb \
 	socfpga_mitysom5cse-h4-8ya_devkit.dtb \
+	socfpga_mitysom5csx-h6-5ya-wp_devkit.dtb \
 	socfpga_vt.dtb
 dtb-$(CONFIG_ARCH_SPEAR13XX) += \
 	spear1310-evb.dtb \
