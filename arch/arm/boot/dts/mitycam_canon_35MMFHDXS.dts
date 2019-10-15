@@ -1,0 +1,249 @@
+/*
+ * Copyright (C) 2014-2015 Altera Corporation <www.altera.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/dts-v1/;
+#include "mitysom_a10s_dsc.dtsi"
+
+/ {
+	aliases {
+		spi0 = &spi0;
+		serial1 = &uart0;
+	};
+
+	soc {
+		hps_lw_bus: bus@0ff200000 {
+			compatible = "simple-bus";
+			reg = <0xFF200000 0x00200000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0x0 0xFF200000 0x00200000>;
+			status = "okay";
+
+			sysid_qsys: sysid@0000 {
+				compatible = "altr,sysid-1.0";
+				reg = <0x000000 0x08>;
+			};
+
+			/* (51-32)=19 is zero */
+			pio_pll: gpio@1000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00001000 0x10>;
+				altr,ngpio = <8>;
+				interrupts = <0 23 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				gpio-line-names = "MCLK_PLL_LOCK", "I2C_INT", "", "", "PLL_LOCKED30", "PLL_LOCKED21", "", "";
+			};
+
+			pio_sensor: gpio@2000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00002000 0x10>;
+				altr,ngpio = <8>;
+				#interrupts = <0 26 4>;
+				#altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				#interrupt-controller;
+				gpio-line-names = "PLL_ARESET30", "PLL_ARESET21", "", "", "DDC_ENABLE_N", "", "", "";
+			};
+
+			/* pll_reconfig      @04000, managed in userspace */
+
+			clspi: spi@13000 {
+				compatible = "cl,spi-1.0";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0x00013000 0x0100>;
+				interrupts = <0 21 4>;
+				master-ref-clk = <100000000>;
+				num-chipselect = <6>;
+				bus-num = <0>;
+
+				/* MAX10 */
+				spidev@0 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <10000000>;
+					reg = <0>;
+				};
+
+				/* ADC0 */
+				spidev@1 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <10000000>;
+					reg = <1>;
+				};
+
+				/* ADC1 */
+				spidev@2 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <10000000>;
+					reg = <2>;
+				};
+
+				/* ADC2 */
+				spidev@3 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <10000000>;
+					reg = <3>;
+				};
+
+				/* ADC3 */
+				spidev@4 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <10000000>;
+					reg = <4>;
+				};
+
+				/* Sensor */
+				spidev@5 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <10000000>;
+					reg = <5>;
+				};
+			};
+
+			/* canon_35MMFHDXS   @12000, managed in userspace */
+
+			pio_fx3: gpio@14000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00014000 0x10>;
+				altr,ngpio = <3>;
+				interrupts = <0 24 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				gpio-line-names = "SENS_PRESENT", "FX3_PRESENT", "FX3_IO", "", "", "", "", "";
+			};
+
+
+			cam_gpio: gpio@10000 {
+				compatible = "cl,camio-1.0";
+				reg = <0x00010000 0x20>;
+				interrupts = <0 22 4>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				gpio-controller;
+				#gpio-cells=<2>;
+				gpio-line-names = "CAMIO1", "CAMIO2", "CAMIO3", "CAMIO4";
+			};
+
+			/* bad_pix           @15000, managed in userspace */
+			/* sgdma_ctrl        @16000, managed in userspace */
+			/* pixel_shift       @17000, managed in userspace */
+			/* stream_to_raster  @18000, managed in userspace */
+			/* sgdma_desc        @19000, managed in userspace */
+			/* u3v_sgdma         @20000, managed in userspace */
+			/* u3v_sgdma_desc    @21000, managed in userspace */
+			/* u3v_fx3           @22000, managed in userspace */
+		};
+
+		streamer0: streamer@80000000 {
+			compatible = "uio,irq";
+			interrupts = <0 20 4>;
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <100000>;
+        i2c-sda-hold-time-ns = <500>;
+
+
+	/* USB IO Tri-Color LED */
+	/* disabled - used directly by ARM software */
+	/* 
+	led@62 {
+		compatible = "nxp,pca9553";
+		reg = <0x62>;
+	}; */
+
+	/* Sensor board */
+	/* EEPROM */
+	senseeprom: eeprom@57 {
+		compatible = "atmel,24c128";
+		reg = <0x57>;
+		pagesize = <64>;
+	};
+
+	/* GPIO Expander */
+	pca6416: pca6416@21 {
+		compatible = "nxp,pca6416";
+		reg = <0x21>;
+		#gpio-cells = <2>;
+		interrupt-controller;
+		interrupt-parent = <&pio_pll>;
+		interrupts = <1 IRQ_TYPE_LEVEL_LOW>;
+		
+		P02 {
+			gpio-hog;
+			gpios = <2 0>;
+			input;
+			line-name = "DONE";
+		};
+
+		P03 {
+			gpio-hog;
+			gpios = <3 0>;
+			input;
+			line-name = "FAULT";
+		};
+
+		P04 {
+			gpio-hog;
+			gpios = <4 0>;
+			output-low;
+			line-name = "SENSOR_PS_ENABLE";
+		};
+
+		P05 {
+			gpio-hog;
+			gpios = <5 0>;
+			input;
+			line-name = "CONFIG_DONE";
+		};
+
+		P06 {
+			gpio-hog;
+			gpios = <6 0>;
+			output-low;
+			line-name = "MAX10_OE";
+		};
+
+		P07 {
+			gpio-hog;
+			gpios = <7 0>;
+			output-high;
+			line-name = "MAX10_CONFIG_N";
+		};
+	};
+
+	/* ADS7828 @ 0x49 -- managed in user space */
+	/* ADS7828 @ 0x4A -- managed in user space */
+};
+
+/* FX3 comms interface */
+&uart0 {
+	status = "okay";
+};
+
