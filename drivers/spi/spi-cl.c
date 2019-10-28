@@ -378,42 +378,17 @@ static irqreturn_t spi_cl_irq(int irq, void *dev)
 #ifdef KDBG
 	printk(KERN_WARNING "IPR = 0x%X\n", IPR);
 #endif
+	/* if we have data to read, read it */
 	while (IPR & IPR_MISO_NEMPTY) {
 		rx_word(spi_cl);
 		IPR = ioread16(&BaseReg[IPR_OFFSET]);
 		rmb();
 	}
 
-#if 0
-	/* no more data to transmit, disable FIFO level flags */
-	if (spi_cl->remaining_bytes <= spi_cl->fifo_depth/2)
-		/* disable helf empty threshold */
-		IER &= ~IER_MOSI_HF;
-
-	if (spi_cl->rx_remaining_bytes <= spi_cl->fifo_depth/2)
-		IER &= ~IER_MISO_HF;
-
-	if (spi_cl->rx_remaining_bytes <= 0)
-		IER &= ~IER_MISO_NEMPTY;
-
-	iowrite16(IER, &BaseReg[IER_OFFSET]);
-
-	IPR = ioread16(&BaseReg[IPR_OFFSET]);
-
-	/* if we are complete, then signal completion to waiting task */
-	if ((IPR & IPR_MOSI_TC) && !(IPR & IPR_MISO_NEMPTY)) {
-		/* disable interrupts */
-		IER = 0;
-		iowrite16(IER, &BaseReg[IER_OFFSET]);
-
-		/* clear trasnmit completion status bit */
-		iowrite16(IPR, &BaseReg[IPR_OFFSET]);
-
-		/* signal to waiting task that we're done */
-		complete(&spi_cl->done);
-	}
-#else
-	/* If there is data left to transmit */
+	/* If there is data left to transmit set transmit interrupts
+	 * Half Full is needed if we have more than 1/2 FIFO to send
+	 * Transmit complete is needed if we have less than 1/2 FIFO
+	 */
 	if (spi_cl->remaining_bytes > 0)
 	{
 		/* enable FIFO level and / or transmit complete mask */
@@ -422,14 +397,27 @@ static irqreturn_t spi_cl_irq(int irq, void *dev)
 		iowrite16(IER, &BaseReg[IER_OFFSET]);
 
 	}
-	else /* no more data to transmit, disable FIFO level flags */
+	/**
+	  * It is possible to complete transmission before the RX fifo flags
+	  * are set.  If we are still expecting Rx bytes, enable the not
+	  * empty interrupt.  This may result in a couple of interrupts
+	  * if we have more than 1 byte pending.
+	  */
+	else if (spi_cl->rx_remaining_bytes > 0)
+	{
+		IER |= IER_MISO_NEMPTY;
+		iowrite16(IER, &BaseReg[IER_OFFSET]);
+	}
+	/**
+	  * At this point, all of our Tx/Rx transactions are done.  clean up.
+	  */
+	else
 	{
 		IPR = ioread16(&BaseReg[IPR_OFFSET]);
 		iowrite16(IPR, &BaseReg[IPR_OFFSET]);
 
 		complete(&spi_cl->done);
 	}
-#endif
 
 	return IRQ_HANDLED;
 }
