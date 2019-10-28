@@ -62,7 +62,7 @@
 				gpio-controller;
 				#interrupt-cells = <1>;
 				#interrupt-controller;
-				gpio-line-names = "PLL_ARESET30", "PLL_ARESET21", "", "", "DDC_ENABLE_N", "", "", "";
+				gpio-line-names = "PLL_ARESET30", "PLL_ARESET21", "MAX10_RESET_N", "", "DDC_ENABLE_N", "", "", "";
 			};
 
 			/* pll_reconfig      @04000, managed in userspace */
