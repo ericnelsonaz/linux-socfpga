@@ -81,7 +81,7 @@
 #define DEL_DELAY_SHIFT		0
 #define DEL_DELAY_EN		0x8000
 
-// #define KDBG 1
+//#define KDBG 1
 
 struct spi_cl_slave {
 	int bytes_per_word;
@@ -385,6 +385,14 @@ static irqreturn_t spi_cl_irq(int irq, void *dev)
 		rmb();
 	}
 
+#ifdef KDBG
+	printk(KERN_WARNING "tx remaining = %d, rx remaining= %d\n", spi_cl->remaining_bytes, spi_cl->rx_remaining_bytes);
+#endif
+
+	// clear pending flags
+	IPR = ioread16(&BaseReg[IPR_OFFSET]);
+	iowrite16(IPR, &BaseReg[IPR_OFFSET]);
+
 	/* If there is data left to transmit set transmit interrupts
 	 * Half Full is needed if we have more than 1/2 FIFO to send
 	 * Transmit complete is needed if we have less than 1/2 FIFO
@@ -413,9 +421,6 @@ static irqreturn_t spi_cl_irq(int irq, void *dev)
 	  */
 	else
 	{
-		IPR = ioread16(&BaseReg[IPR_OFFSET]);
-		iowrite16(IPR, &BaseReg[IPR_OFFSET]);
-
 		complete(&spi_cl->done);
 	}
 
@@ -468,9 +473,6 @@ static int spi_cl_setup_transfer(struct spi_device *spi, struct spi_transfer *t)
 	if (spi->bits_per_word > 32 || (spi->bits_per_word & 3) != 0)
 		return -EINVAL;
 	spi_cl->bytes_per_word = (spi->bits_per_word + 7) / 8;
-#ifdef KDBG
-	printk(KERN_WARNING "Bits per word = %d/%d\n", spi->bits_per_word, bits_per_word);
-#endif
 	CSR &= ~(CSR_DWIDTH_MASK << CSR_DWIDTH_SHIFT);
 	CSR |= ((spi->bits_per_word / 4 - 1) & CSR_DWIDTH_MASK)
 		<< CSR_DWIDTH_SHIFT;
