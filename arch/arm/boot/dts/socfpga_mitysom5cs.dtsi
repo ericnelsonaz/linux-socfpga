@@ -135,11 +135,6 @@
 			speed-mode = <0>;
 			status = "okay";
 
-			led@42 {
-				device_type = "led";
-				compatible = "ams,as3668";
-				reg = <0x42>;
-			};
 			led@30 {
 				compatible = "ti,lp5562";
 				reg = <0x30>;

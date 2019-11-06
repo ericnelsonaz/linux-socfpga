@@ -55,6 +55,11 @@
 &i2c1 {
 	speed-mode = <0>;
 	status = "okay";
+    /* Power Monitor */
+	ltc2945@6F {
+		compatible = "ltc2945";
+		reg = <0x6F>;
+    };
 };
 
 &hps_lw_bus {
