@@ -39,6 +39,14 @@
 #define DIV_OFFSET		14
 #define DEL_OFFSET		16
 
+#define SPI_CORE_ID		14
+#define VER_ID(x)		((x & 0x0FF00) >> 8)
+#define VER_MAJOR(x)		((x & 0x0F0) >> 4)
+#define VER_MINOR(x)		(x & 0x0F)
+#define VER_YEAR(x)		(((x & 0x3E000000) >> 25) + 2000)
+#define VER_MONTH(x)		((x & 0x01E00000) >> 21)
+#define VER_DAY(x)		((x & 0x001F0000) >> 16)
+
 #define CSR_RCVEN		(1 << 0)
 #define CSR_SCLK_CTRL		(1 << 1)
 #define CSR_CPHA		(1 << 2)
@@ -80,8 +88,6 @@
 #define DEL_DELAY_MASK		0x7FFF
 #define DEL_DELAY_SHIFT		0
 #define DEL_DELAY_EN		0x8000
-
-//#define KDBG 1
 
 struct spi_cl_slave {
 	int bytes_per_word;
@@ -315,9 +321,6 @@ static void rx_word(struct spi_cl *spi_cl)
 	if (spi_cl->rx_buf) {
 		int i;
 		for (i = 0; i < spi_cl->bytes_per_word; i++) {
-#ifdef KDBG
-			printk(KERN_WARNING "RX - 0x%X\n", FDR);
-#endif
 			*spi_cl->rx_buf++ = FDR & 0xFF;
 			FDR >>= 8;
 		}
@@ -359,25 +362,14 @@ static irqreturn_t spi_cl_irq(int irq, void *dev)
 	struct spi_cl *spi_cl = dev;
 	unsigned short *BaseReg;
 	u16 IPR;
-	u16 IER;
+	u16 IER = 0;
 
 	BaseReg = (unsigned short *)spi_cl->baseaddr;
 
-	IPR = ioread16(&BaseReg[IPR_OFFSET]);
-
-	/* disable interrupts */
-	IER = 0;
-	iowrite16(IER, &BaseReg[IER_OFFSET]);
-	wmb();
-
-	if (spi_cl->remaining_bytes > 0)
-		fill_tx_fifo(spi_cl);
-
+	/* get the state that got us here */
 	IPR = ioread16(&BaseReg[IPR_OFFSET]);
 	rmb();
-#ifdef KDBG
-	printk(KERN_WARNING "IPR = 0x%X\n", IPR);
-#endif
+
 	/* if we have data to read, read it */
 	while (IPR & IPR_MISO_NEMPTY) {
 		rx_word(spi_cl);
@@ -385,44 +377,30 @@ static irqreturn_t spi_cl_irq(int irq, void *dev)
 		rmb();
 	}
 
-#ifdef KDBG
-	printk(KERN_WARNING "tx remaining = %d, rx remaining= %d\n", spi_cl->remaining_bytes, spi_cl->rx_remaining_bytes);
-#endif
-
-	// clear pending flags
-	IPR = ioread16(&BaseReg[IPR_OFFSET]);
-	iowrite16(IPR, &BaseReg[IPR_OFFSET]);
-
-	/* If there is data left to transmit set transmit interrupts
-	 * Half Full is needed if we have more than 1/2 FIFO to send
-	 * Transmit complete is needed if we have less than 1/2 FIFO
-	 */
+	/* try to add more outbound bytes if needed */
 	if (spi_cl->remaining_bytes > 0)
 	{
-		/* enable FIFO level and / or transmit complete mask */
-		IER |= IER_MOSI_HF;
-		IER |= IER_MOSI_TC;
-		iowrite16(IER, &BaseReg[IER_OFFSET]);
-
+		fill_tx_fifo(spi_cl);
+		/* set interrupt flag based on if we will still need to transmit more */
+		IER |= (spi_cl->remaining_bytes > 0) ? IER_MOSI_HF : IER_MOSI_TC;
 	}
+
 	/**
 	  * It is possible to complete transmission before the RX fifo flags
 	  * are set.  If we are still expecting Rx bytes, enable the not
 	  * empty interrupt.  This may result in a couple of interrupts
 	  * if we have more than 1 byte pending.
 	  */
-	else if (spi_cl->rx_remaining_bytes > 0)
-	{
+	if ((IPR & IPR_MOSI_TC) && (spi_cl->rx_remaining_bytes > 0))
 		IER |= IER_MISO_NEMPTY;
-		iowrite16(IER, &BaseReg[IER_OFFSET]);
-	}
+
 	/**
 	  * At this point, all of our Tx/Rx transactions are done.  clean up.
 	  */
-	else
-	{
+	if ((IPR & IPR_MOSI_TC) && (spi_cl->rx_remaining_bytes <= 0))
 		complete(&spi_cl->done);
-	}
+
+	iowrite16(IER, &BaseReg[IER_OFFSET]);
 
 	return IRQ_HANDLED;
 }
@@ -605,10 +583,6 @@ static int spi_cl_txrx_bufs(struct spi_device *spi, struct spi_transfer *t)
 	else
 		spi_cl->rx_remaining_bytes = 0;
 
-#ifdef KDBG
-	printk(KERN_WARNING "remaining_bytes = %d\n", spi_cl->remaining_bytes);
-	printk(KERN_WARNING "rx_remaining_bytes = %d\n", spi_cl->rx_remaining_bytes);
-#endif
 	spi_cl->tx_buf = t->tx_buf;
 
 	do {
@@ -621,20 +595,29 @@ static int spi_cl_txrx_bufs(struct spi_device *spi, struct spi_transfer *t)
 	IER = 0;
 	iowrite16(IER, &BaseAddr[IER_OFFSET]);
 
-	IPR = ioread16(&BaseAddr[IPR_OFFSET]);
-	IPR |= (IPR_MOSI_TC);
-	iowrite16(IPR, &BaseAddr[IPR_OFFSET]);
-
-	reinit_completion(&spi_cl->done);
-
 	/* reset fifos */
 	CSR = ioread16(&BaseAddr[CSR_OFFSET]);
 	CSR |= CSR_FIFO_RST;
 	iowrite16(CSR, &BaseAddr[CSR_OFFSET]);
 	wmb();
 
+	/* clear pending interrupts */
+	IPR = ioread16(&BaseAddr[IPR_OFFSET]);
+	iowrite16(IPR, &BaseAddr[IPR_OFFSET]);
+
+	reinit_completion(&spi_cl->done);
+
 	/* fill the output fifo */
 	fill_tx_fifo(spi_cl);
+
+	IER = 0;
+	/* if we didn't put all our bytes on the FIFO, flag FIFO level interrupt */
+	if (spi_cl->remaining_bytes > 0)
+		IER |= IER_MOSI_HF;
+	else /* all the bytes were queued, so just wait for complete */
+		IER |= IER_MOSI_TC;
+	iowrite16(IER, &BaseAddr[IER_OFFSET]);
+	wmb();
 
 	/* start the outbound transfer by setting go bit */
 	CSR = ioread16(&BaseAddr[CSR_OFFSET]);
@@ -646,27 +629,8 @@ static int spi_cl_txrx_bufs(struct spi_device *spi, struct spi_transfer *t)
 	iowrite16(CSR, &BaseAddr[CSR_OFFSET]);
 	wmb();
 
-	/* enable interrupts to catch transfer completion, or
-	 * FIFO emptying */
-	IER = 0;
-	IER |= IER_MOSI_TC;
-	if (spi_cl->remaining_bytes > 0)
-		IER |= IER_MOSI_HF;
-#if 0
-	if (spi_cl->rx_remaining_bytes >= spi_cl->fifo_depth/2)
-		IER |= IER_MISO_HF;
-	else if (spi_cl->rx_remaining_bytes > 0)
-		IER |= IER_MISO_NEMPTY;
-#endif
-	iowrite16(IER, &BaseAddr[IER_OFFSET]);
-
 	/* wait for completion */
 	wait_for_completion(&spi_cl->done);
-
-#ifdef KDBG
-	if (spi_cl->remaining_bytes)
-		printk(KERN_WARNING "t->len = %d.  remaining_bytes = %d\n", t->len, spi_cl->remaining_bytes);
-#endif
 
 	return t->len - spi_cl->remaining_bytes;
 }
@@ -720,6 +684,7 @@ static int spi_cl_probe(struct platform_device *pdev)
 
 	unsigned short *BaseReg;
 	u16 FWR, DEL;
+	u32 VER;
 
 	rv = sysfs_create_group(&pdev->dev.kobj, &spi_cl_attr_group);
 	if (rv) {
@@ -783,6 +748,24 @@ static int spi_cl_probe(struct platform_device *pdev)
 	}
 
 	BaseReg = (unsigned short *)spi_cl->baseaddr;
+
+	/* check version registers */
+	VER = ioread32((u32 *) &BaseReg[VER_OFFSET]);
+	dev_info(&pdev->dev, "FPGA version : %d : %d.%02d (%d-%d-%d)\n",
+		VER_ID(VER), VER_MAJOR(VER), VER_MINOR(VER),
+		VER_YEAR(VER), VER_MONTH(VER), VER_DAY(VER));
+
+	if (VER_ID(VER) != SPI_CORE_ID) {
+		dev_err(&pdev->dev, "unknown core ID\n");
+		rv = -EIO;
+		goto probe_bail_free_master;
+	}
+
+	if (!((VER_MAJOR(VER) == 3) && (VER_MINOR(VER) >= 1))) {
+		dev_err(&pdev->dev, "FPGA version too low.  Please upgrade\n");
+		rv = -EIO;
+		goto probe_bail_free_master;
+	}
 
 	spi_cl->bitbang.flags = SPI_CPOL | SPI_CPHA | SPI_LOOP;
 	master->bus_num = spi_cl->pdata.bus_num;
