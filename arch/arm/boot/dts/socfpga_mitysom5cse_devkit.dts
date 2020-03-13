@@ -119,11 +119,7 @@
 	cap-sd-highspeed;
 	altr,dw-mshc-ciu-div = <3>;
 	altr,dw-mshc-sdr-timing = <0 3>;
-
-	slot@0 {
-		reg = <0>;
-		bus-width = <4>;
-	};
+	bus-width = <4>;
 };
 
 &gmac1 {

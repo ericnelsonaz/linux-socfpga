@@ -120,10 +120,7 @@
 	cap-sd-highspeed;
 	vmmc-supply = <&regulator_3_3v>;
 	vwmmc-supply= <&regulator_3_3v>;
-	slot@0 {
-		reg = <0>;
-		bus-width = <4>;
-	};
+	bus-width = <4>;
 };
 
 &gmac1 {
