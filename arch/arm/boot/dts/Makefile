@@ -698,6 +698,7 @@ dtb-$(CONFIG_ARCH_SHMOBILE_MULTI) += \
 dtb-$(CONFIG_ARCH_SOCFPGA) += \
 	mitysom_a10s_devkit.dtb \
 	mitysom_a10s_dsc_testfixture.dtb \
+	mitycam_battelle_g2.dtb \
 	mitycam_cmv50000_evk.dtb \
 	mitycam_cmv8000_u3v.dtb \
 	mitycam_ccd_ge.dtb \
