@@ -66,8 +66,8 @@
 			};
 
 			/* pll_reconfig  @04000, managed in userspace */
-			/* canon_120mxs	 @12000, managed in userspace */
-			/* pwm           @11000, managed in userspace */
+			/* pwm           @11000, managed in userspace with uio for interrupt */
+			/* canon_120mxs  @12000, managed in userspace with uio for interrupt */
 			/* tbd sgdma_desc    @xxxxx, managed in userspace */
 			/* tbd sgdma_ctrl    @xxxxx, managed in userspace */
 
@@ -124,6 +124,7 @@
 			/* u3v_fx3         @22000, managed in userspace */
 		};
 
+		/* Order of uio is important. Don't reorder, will change /dev/uio# */
 		streamer0: streamer@80000000 {
 			compatible = "uio,irq";
 			interrupts = <0 20 4>;
@@ -132,6 +133,11 @@
 		pwm0: pwm@ff211000 {
 			compatible = "uio,irq";
 			interrupts = <0 26 4>;
+		};
+
+		canon_120mxs: canon_120mxs@ff212000 {
+			compatible = "uio,irq";
+			interrupts = <0 25 4>;
 		};
 	};
 };
