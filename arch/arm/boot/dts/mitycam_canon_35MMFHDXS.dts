@@ -192,7 +192,7 @@
 		reg = <0x21>;
 		#gpio-cells = <2>;
 		gpio-controller;
-		gpio-line-names = "", "DONE", "FAULT", "SENSOR_PS_ENABLE", "ADC_PS_ENABLE", "CONFIG_DONE", "MAX10_OE", "MAX10_CONFIG_N";
+		gpio-line-names = "CONFIG_SEL", "DONE", "FAULT", "SENSOR_PS_ENABLE", "ADC_PS_ENABLE", "CONFIG_DONE", "MAX10_OE", "MAX10_CONFIG_N", "PS_ENB" ;
 		/* interrupt-controller; */
 		/* interrupt-parent = <&pio_pll>; */
 		/* interrupts = <1 IRQ_TYPE_LEVEL_LOW>; */
