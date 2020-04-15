@@ -55,12 +55,8 @@
 			broken-cd;
 			altr,dw-mshc-ciu-div = <3>;
 			altr,dw-mshc-sdr-timing = <0 3>;
+			bus-width = <4>;
 			status = "okay";
-
-			slot@0 {
-				reg = <0>;
-				bus-width = <4>;
-			};
 		};
 
 		i2c0: i2c@ffc04000 {
