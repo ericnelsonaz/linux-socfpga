@@ -1,0 +1,237 @@
+/*
+ * Copyright (C) 2014-2015 Altera Corporation <www.altera.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/dts-v1/;
+#include "mitysom_a10s_dsc.dtsi"
+
+/ {
+	aliases {
+		spi0 = &spi0;
+		serial1 = &uart0;
+	};
+
+	soc {
+		hps_lw_bus: bus@0ff200000 {
+			compatible = "simple-bus";
+			reg = <0xFF200000 0x00200000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0x0 0xFF200000 0x00200000>;
+			status = "okay";
+
+			sysid_qsys: sysid@0000 {
+				compatible = "altr,sysid-1.0";
+				reg = <0x000000 0x08>;
+			};
+
+			/* mitycam TPG                     @01000, managed in userspace */
+			/* mitycam bl_est                  @02000, managed in userspace */
+			/* mitycam stream_to_sdram_raster  @03000, managed in userspace */
+
+			clspi: spi@04000 {
+				compatible = "cl,spi-1.0";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0x00004000 0x0100>;
+				interrupts = <0 26 4>;
+				master-ref-clk = <100000000>;
+				num-chipselect = <3>;
+				bus-num = <0>;
+
+				/* sensor */
+				spidev@1 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <50000000>;
+					reg = <0>;
+				};
+				/* lattice */
+				spidev@2 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <13500000>;
+					reg = <1>;
+				};
+				/* dummy (for lattice programming) */
+				spidev@3 {
+					compatible = "cl,spidev";
+					spi-max-frequency = <13500000>;
+					reg = <2>;
+				};
+			};
+
+			cam_gpio: gpio@05000 {
+				compatible = "cl,camio-1.0";
+				reg = <0x00005000 0x20>;
+				interrupts = <0 24 4>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				gpio-controller;
+				#gpio-cells=<2>;
+				gpio-line-names = "CAMIO1", "CAMIO2", "CAMIO3", "CAMIO4";
+			};
+
+			pio_outs: gpio@6000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00006000 0x10>;
+				altr,ngpio = <32>;
+				/* interrupts = <0 23 4>; */
+				/* altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>; */
+				#gpio-cells = <2>;
+				gpio-controller;
+				/* #interrupt-cells = <1>; */
+				/* interrupt-controller; */
+				gpio-line-names = "", "", "SPI_ENABLE", "XCVR_RESET",
+						  "HDMI_VSF_DISABLE", "HDMI_AVIF_DISABLE", "DDC_ENABLE_N", "",
+						  "", "", "", "",
+						  "", "", "", "",
+						  "", "", "", "",
+						  "", "", "", "",
+						  "", "", "", "",
+						  "", "", "", "";
+			};
+
+			pio_ins: gpio@7000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00007000 0x10>;
+				altr,ngpio = <32>;
+				interrupts = <0 23 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				gpio-line-names = "", "", "", "",
+						  "FPLL_LOCK", "HDMI_IOPLL_LOCK", "HDMI_TX_READY", "HDMI_XCVR_CAL_BUSY",
+						  "HDMI_TX1_BUSY", "HDMI_TX2_BUSY", "HDMI_TX3_BUSY", "HDMI_TX4_BUSY",
+						  "HDMI_TX1_READY", "HDMI_TX2_READY", "HDMI_TX3_READY", "HDMI_TX4_READY",
+						  "HDMI_TX1_AN_RST", "HDMI_TX2_AN_RST", "HDMI_TX3_AN_RST", "HDMI_TX4_AN_RST",
+						  "HDMI_TX1_DIG_RST", "HDMI_TX2_DIG_RST", "HDMI_TX3_DIG_RST", "HDMI_TX4_DIG_RST",
+						  "HDMI_PLL_PD", "HDMI_PLL_RST", "IOPLL_LOCK", "",
+						  "OPTO_ISO_0", "OPTO_ISO_1", "OPTO_ISO_2", "ALWAYS_ONE";
+			};
+
+			/* mitycam U3V SDGMA DESC  @08000, managed in userspace */
+			/* mitycam U3V SDGMA CSR   @09000, managed in userspace */
+			/* mitycam U3V_FX3         @0A000, managed in userspace */
+
+			pio_fx3: gpio@0B000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x0000B000 0x10>;
+				altr,ngpio = <3>;
+				interrupts = <0 25 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				gpio-line-names = "SENS_PRESENT", "FX3_PRESENT", "FX3_IO", "", "", "", "", "";
+			};
+
+			/* mitycam conv_5x5               @00C000, managed in userspace */
+			/* mitycam lvds_to_csi2           @00D000, managed in userspace */
+			/* mitycam csi2_dphy_to_mitycam   @00E000, managed in userspace */
+			/* mitycam row_adjust             @011000, managed in userspace */
+			/* mitycam bayer_demosaic         @012000, managed in userspace */
+			/* VIP color_space_converter      @013000, managed in userspace */
+			/* mitycam blc_gain               @014000, managed in userspace */
+			/* mitycam demux RAW              @015000, managed in userspace */
+			/* mitycam demux bayer            @016000, managed in userspace */
+			/* mitycam PLL Reconfig           @030000, managed in userspace */
+			/* mitycam fPLL                   @031000, managed in userspace */
+			/* VIP read buffer                @039000, managed in userspace */
+			/* VIP scaler                     @03A000, managed in userspace */
+			/* VIP mixer                      @03B000, managed in userspace */
+			/* VIP CVO                        @03C000, managed in userspace */
+			/* VIP gamma                      @300000, managed in userspace */
+			/* VIP TPG                        @380000, managed in userspace */
+			/* VIP write buffer               @381000, managed in userspace */
+			/* VIP switcher                   @383000, managed in userspace */
+		};
+
+		/* Order of uio is important. Don't reorder, will change /dev/uio# */
+		/* Stream to SDRAM Raster */
+		streamer0: streamer@80000000 {
+			compatible = "uio,irq";
+			interrupts = <0 27 4>;
+		};
+
+		/* U3V MSGDMA interrupt */
+		u3v_sgdma: sgdma@ff209000 {
+			compatible = "uio,irq";
+			interrupts = <0 19 4>;
+		};
+
+		/* Guaissian 5x5 interrupts */
+		conv_5x5: canon_5x5@ff20c000 {
+			compatible = "uio,irq";
+			interrupts = <0 30 4>;
+		};
+
+		/* bayer demosaic interrupts */
+		debayer: debayer@ff212000 {
+			compatible = "uio,irq";
+			interrupts = <0 28 4>;
+		};
+
+		/* hdmi reader interrupts */
+		hdmi_reader: hdmi_reader@ff239000 {
+			compatible = "uio,irq";
+			interrupts = <0 22 4>;
+		};
+
+		/* hdmi CVO interrupts */
+		hdmi_cvo: hdmi_cvo@ff23C000 {
+			compatible = "uio,irq";
+			interrupts = <0 20 4>;
+		};
+
+		/* hdmi writer interrupts */
+		hdmi_writer: hdmi_writer@ff381000 {
+			compatible = "uio,irq";
+			interrupts = <0 21 4>;
+		};
+
+		/* hdmi switcher interrupts */
+		hdmi_switcher: hdmi_switcher@ff383000 {
+			compatible = "uio,irq";
+			interrupts = <0 29 4>;
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <100000>;
+        i2c-sda-hold-time-ns = <500>;
+
+
+	/* USB IO Tri-Color LED */
+	/* disabled - used directly by ARM software */
+	/* 
+	led@62 {
+		compatible = "nxp,pca9553";
+		reg = <0x62>;
+	}; */
+
+	/* Sensor board */
+
+};
+
+/* FX3 comms interface */
+&uart0 {
+	status = "okay";
+};
+
