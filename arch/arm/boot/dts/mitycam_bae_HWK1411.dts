@@ -93,11 +93,11 @@
 				gpio-controller;
 				/* #interrupt-cells = <1>; */
 				/* interrupt-controller; */
-				gpio-line-names = "", "", "SPI_ENABLE", "XCVR_RESET",
-						  "HDMI_VSF_DISABLE", "HDMI_AVIF_DISABLE", "DDC_ENABLE_N", "",
-						  "", "", "", "",
-						  "", "", "", "",
-						  "", "", "", "",
+				gpio-line-names = "SENS_CLK_EN", "MD6000_CLK_EN", "SPI_ENABLE", "XCVR_RESET",
+						  "HDMI_VSF_DISABLE", "HDMI_AVIF_DISABLE", "DDC_ENABLE_N", "SCC_SHUTDOWN_L",
+						  "MD6000_BUFF_EN", "MD6000_CRESET", "MD6000_PWR_EN", "VDDIO_1V8_EN",
+						  "DVDD_1V2_EN", "AVDD_5V0_EN", "ALL_ANALOG_EN", "SCAN_MODE",
+						  "PLL_BYPASS", "INIT_ENA", "RESET_B", "",
 						  "", "", "", "",
 						  "", "", "", "",
 						  "", "", "", "";
@@ -143,6 +143,27 @@
 			/* mitycam conv_5x5               @00C000, managed in userspace */
 			/* mitycam lvds_to_csi2           @00D000, managed in userspace */
 			/* mitycam csi2_dphy_to_mitycam   @00E000, managed in userspace */
+
+			pio_ins2: gpio@f000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x0000f000 0x10>;
+				altr,ngpio = <32>;
+				interrupts = <0 31 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+				gpio-line-names = "BOARD_ID0", "BOARD_ID1", "BOARD_ID2", "BOARD_ID3",
+						  "COLOR_SENSOR_N", "MD6000_DONE", "MODULE_N", "SCC_INTERRUPT_L",
+						  "SENS_PLL_LOCK", "", "", "",
+						  "", "", "", "",
+						  "", "", "", "",
+						  "", "", "", "",
+						  "", "", "", "",
+						  "", "", "", "";
+			};
+
 			/* mitycam row_adjust             @011000, managed in userspace */
 			/* mitycam bayer_demosaic         @012000, managed in userspace */
 			/* VIP color_space_converter      @013000, managed in userspace */
