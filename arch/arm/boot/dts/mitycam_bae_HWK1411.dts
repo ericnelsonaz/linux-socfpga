@@ -97,8 +97,8 @@
 						  "HDMI_VSF_DISABLE", "HDMI_AVIF_DISABLE", "DDC_ENABLE_N", "SCC_SHUTDOWN_L",
 						  "MD6000_BUFF_EN", "MD6000_CRESET", "MD6000_PWR_EN", "VDDIO_1V8_EN",
 						  "DVDD_1V2_EN", "AVDD_5V0_EN", "ALL_ANALOG_EN", "SCAN_MODE",
-						  "PLL_BYPASS", "INIT_ENA", "RESET_B", "",
-						  "", "", "", "",
+						  "PLL_BYPASS", "INIT_ENA", "RESET_B", "LENS_PWR_EN",
+						  "MD6000_CS", "", "", "",
 						  "", "", "", "",
 						  "", "", "", "";
 			};
@@ -195,41 +195,41 @@
 			interrupts = <0 19 4>;
 		};
 
-		/* Guaissian 5x5 interrupts */
+		/* Guaissian 5x5 interrupts 
 		conv_5x5: canon_5x5@ff20c000 {
 			compatible = "uio,irq";
 			interrupts = <0 30 4>;
-		};
+		}; */
 
-		/* bayer demosaic interrupts */
+		/* bayer demosaic interrupts 
 		debayer: debayer@ff212000 {
 			compatible = "uio,irq";
 			interrupts = <0 28 4>;
-		};
+		}; */
 
-		/* hdmi reader interrupts */
+		/* hdmi reader interrupts 
 		hdmi_reader: hdmi_reader@ff239000 {
 			compatible = "uio,irq";
 			interrupts = <0 22 4>;
-		};
+		}; */
 
-		/* hdmi CVO interrupts */
+		/* hdmi CVO interrupts 
 		hdmi_cvo: hdmi_cvo@ff23C000 {
 			compatible = "uio,irq";
 			interrupts = <0 20 4>;
-		};
+		}; */
 
-		/* hdmi writer interrupts */
+		/* hdmi writer interrupts
 		hdmi_writer: hdmi_writer@ff381000 {
 			compatible = "uio,irq";
 			interrupts = <0 21 4>;
-		};
+		}; */
 
-		/* hdmi switcher interrupts */
+		/* hdmi switcher interrupts
 		hdmi_switcher: hdmi_switcher@ff383000 {
 			compatible = "uio,irq";
 			interrupts = <0 29 4>;
-		};
+		}; */
 	};
 };
 
