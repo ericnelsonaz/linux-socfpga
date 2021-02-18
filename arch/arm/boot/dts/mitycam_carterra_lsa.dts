@@ -1,0 +1,157 @@
+/*
+ * Copyright (C) 2014-2015 Altera Corporation <www.altera.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/dts-v1/;
+#include "mitysom_a10s_dsc.dtsi"
+
+/ {
+	aliases {
+		spi0 = &spi0;
+		serial1 = &uart0;
+	};
+
+	soc {
+		hps_lw_bus: bus@0ff200000 {
+			compatible = "simple-bus";
+			reg = <0xFF200000 0x00200000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0x0 0xFF200000 0x00200000>;
+			status = "okay";
+
+			sysid_qsys: sysid@0000 {
+				compatible = "altr,sysid-1.0";
+				reg = <0x000000 0x08>;
+			};
+
+			pio_outputs: gpio@4000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00004000 0x10>;
+				altr,ngpio = <32>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				gpio-line-names = "SENSOR_PS_ENB", "XMASTER", "XCLR", "TEC_DIR_COOLN",
+						  "TEC_BREAK", "CLOCK_EN", "", "",
+						  "","","","",
+						  "","","","",
+						  "","","","",
+						  "","","","",
+						  "","","","",
+						  "","","","";
+			};
+
+			pio_inputs: gpio@5000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00005000 0x10>;
+				altr,ngpio = <32>;
+				#interrupts = <0 22 4>;
+				#altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				#interrupt-controller;
+				gpio-line-names = "DONE", "TOUT0", "TOUT1", "TOUT2",
+						  "XVS", "XHS", "IOPLL_LOCKED", "",
+						  "","","","",
+						  "","","","",
+						  "","","","",
+						  "","","","",
+						  "","","","",
+						  "","","","";
+			};
+
+			clspi: spi@3000 {
+				compatible = "cl,spi-1.0";
+				#address-cells = <1>;
+				#size-cells = <0>;
+				reg = <0x00003000 0x0100>;
+				interrupts = <0 21 4>;
+				master-ref-clk = <100000000>;
+				num-chipselect = <1>;
+				bus-num = <0>;
+
+				spidev@1 {
+					compatible = "cl,spidev";
+					/* Sensor supports up to 13.5Mhz */
+					spi-max-frequency = <13500000>;
+					reg = <0>;
+				};
+			};
+
+		};
+
+		/* Order of uio is important. Don't reorder, will change /dev/uio# */
+		streamer0: streamer@80000000 {
+			compatible = "uio,irq";
+			interrupts = <0 20 4>;
+		};
+
+		sony_imx250: sony_imx250@ff201000 {
+			compatible = "uio,irq";
+			interrupts = <0 19 4>;
+		};
+	};
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <100000>;
+	i2c-sda-hold-time-ns = <500>;
+
+
+	/* USB IO Tri-Color LED */
+	/* disabled - used directly by ARM software */
+	/* 
+	led@62 {
+		compatible = "nxp,pca9553";
+		reg = <0x62>;
+	}; */
+
+	/* Sensor board */
+
+};
+
+&gmac1 {
+	phy-mode = "rgmii";
+	phy-addr = <0xffffffff>; /* probe for phy addr */
+
+	/*
+	 * These skews assume the user's FPGA design is adding 600ps of delay
+	 * for TX_CLK on Arria 10.
+	 *
+	 * All skews are offset since hardware skew values for the ksz9031
+	 * range from a negative skew to a positive skew.
+	 * See the micrel-ksz90x1.txt Documentation file for details.
+	 */
+	txd0-skew-ps = <0>; /* -420ps */
+	txd1-skew-ps = <0>; /* -420ps */
+	txd2-skew-ps = <0>; /* -420ps */
+	txd3-skew-ps = <0>; /* -420ps */
+	rxd0-skew-ps = <420>; /* 0ps */
+	rxd1-skew-ps = <420>; /* 0ps */
+	rxd2-skew-ps = <420>; /* 0ps */
+	rxd3-skew-ps = <420>; /* 0ps */
+	txen-skew-ps = <0>; /* -420ps */
+	txc-skew-ps = <1860>; /* 960ps */
+	rxdv-skew-ps = <420>; /* 0ps */
+	rxc-skew-ps = <1680>; /* 780ps */
+	max-frame-size = <3800>;
+	snps,reset-gpio = <&porta 1 GPIO_ACTIVE_LOW>; 			
+	snps,reset-delays-us = <0 10000 1000000>;
+	snps,reset-active-low;
+	status = "okay";
+};
