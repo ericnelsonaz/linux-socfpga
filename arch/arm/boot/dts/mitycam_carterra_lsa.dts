@@ -112,6 +112,41 @@
 	clock-frequency = <100000>;
 	i2c-sda-hold-time-ns = <500>;
 
+	/* Address 0x39. ADS7828E */
+	ads7828@39 {
+		compatible = "ti,ads7828";
+		reg = <0x39>;
+	};
+
+	/* Address 0x42.  ENS210.  No Driver Available.  Controlled by LibDaq */
+
+	/* see Documentation/devicetree/bindings/hwmon/ads1015.txt */
+	ads115@48 {
+		compatible = "ti,ads1115";
+		reg = <0x48>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* AIN0 (VRT1) - AIN1 (1.024),  RT1 */
+		channel@0 {
+			reg = <0>;
+			ti,gain = <3>; /* +/- 1.024 V range (TBC) */
+			ti,datarate = <0>; /* 8 SPS */
+		};
+
+		/* AIN0 (VRT2) - AIN3 (1.024),  RT2 */
+		channel@3 {
+			reg = <3>;
+			ti,gain = <3>; /* +/- 1.024 V range (TBC) */
+			ti,datarate = <0>; /* 8 SPS */
+		};
+	};
+
+	/* Sensor board EEPROM */
+	eeprom@50 {
+		compatible = "microchip,24c512";
+		reg = <0x57>;
+	};
 
 	/* USB IO Tri-Color LED */
 	/* disabled - used directly by ARM software */
@@ -121,7 +156,9 @@
 		reg = <0x62>;
 	}; */
 
-	/* Sensor board */
+	/* DAC used for TEC control */
+	/* MCP4725 at address 0x63 */
+	/* disabled - used directly by ARM software */
 
 };
 
