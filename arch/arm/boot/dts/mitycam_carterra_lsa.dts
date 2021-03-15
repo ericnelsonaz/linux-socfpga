@@ -121,7 +121,7 @@
 	/* Address 0x42.  ENS210.  No Driver Available.  Controlled by LibDaq */
 
 	/* see Documentation/devicetree/bindings/hwmon/ads1015.txt */
-	ads115@48 {
+	ads1115@48 {
 		compatible = "ti,ads1115";
 		reg = <0x48>;
 		#address-cells = <1>;
