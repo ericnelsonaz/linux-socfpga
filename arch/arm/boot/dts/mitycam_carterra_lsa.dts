@@ -44,7 +44,7 @@
 				altr,ngpio = <32>;
 				#gpio-cells = <2>;
 				gpio-controller;
-				gpio-line-names = "SENSOR_PS_ENB", "XMASTER", "XCLR", "TEC_DIR_COOLN",
+				gpio-line-names = "SENSOR_PS_ENB", "XMASTER", "XCLR", "TECDIR_COOL_HEATN",
 						  "TEC_BREAK", "CLOCK_EN", "", "",
 						  "","","","",
 						  "","","","",
