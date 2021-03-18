@@ -92,6 +92,17 @@
 				};
 			};
 
+			cam_gpio: gpio@8000 {
+				compatible = "cl,camio-1.0";
+				reg = <0x00008000 0x20>;
+				interrupts = <0 22 4>;
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				gpio-controller;
+				#gpio-cells=<2>;
+				gpio-line-names = "CAMIO1", "CAMIO2", "CAMIO3", "CAMIO4";
+			};
+
 		};
 
 		/* Order of uio is important. Don't reorder, will change /dev/uio# */
