@@ -257,8 +257,13 @@
 				gpio-controller;
 				#interrupt-cells = <1>;
 				interrupt-controller;
-				gpio-line-names = "CCD_IDLE", "GAIN", "FILTERSEL", "CLKOUT_PLL_LOCKED", "RXCLK_PLL_LOCKED", "ADC_TEST_PAT", "", "",
-						  "CAMIN1", "CAMIN2", "CAMIN3", "CAMOUT1", "CAMOUT2", "CAMOUT3", "CAMOUT4", "CAMOUT5", "EXPOSE_OVERRIDE";
+				gpio-line-names = "CCD_IDLE", "GAIN", "FILTERSEL", 
+						"CLKOUT_PLL_LOCKED", "RXCLK_PLL_LOCKED", 
+						"ADC_TEST_PAT", "", "",
+						"CAMIN1", "CAMIN2", "CAMIN3", 
+						"CAMOUT1", "CAMOUT2", "CAMOUT3", 
+						"CAMOUT4", "CAMOUT5", "EXPOSE_OVERRIDE",
+						"BOARD_ID0", "BOARD_ID1", "BOARD_ID2", "BOARD_ID3";
 			};
 
 			uart2: serial2@15000 {
