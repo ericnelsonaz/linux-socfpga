@@ -1,0 +1,132 @@
+/*
+ * Copyright (C) 2014-2015 Altera Corporation <www.altera.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/dts-v1/;
+#include "mitysom_a10s_dsc.dtsi"
+
+/ {
+	aliases {
+		spi0 = &spi0;
+		serial1 = &uart0;
+	};
+
+	soc {
+		hps_lw_bus: bus@0ff200000 {
+			compatible = "simple-bus";
+			reg = <0xFF200000 0x00200000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0x0 0xFF200000 0x00200000>;
+			status = "okay";
+
+			sysid_qsys: sysid@0000 {
+				compatible = "altr,sysid-1.0";
+				reg = <0x000000 0x08>;
+			};
+
+			/* (51-32)=19 is zero */
+			cmv50000_pio_outs: gpio@1000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00001000 0x10>;
+				altr,ngpio = <13>;
+				interrupts = <0 25 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+			};
+
+			cmv50000_pio_ins: gpio@2000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00002000 0x10>;
+				altr,ngpio = <4>;
+				interrupts = <0 26 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+			};
+
+			cmv50000_pio_gpio: gpio@3000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00003000 0x10>;
+				altr,ngpio = <3>;
+				interrupts = <0 24 4>;
+				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				#interrupt-cells = <1>;
+				interrupt-controller;
+			};
+
+			cam_gpio: gpio@1B000 {
+				compatible = "cl,camio-1.0";
+				reg = <0x0001B000 0x20>;
+				interrupts = <0 21 4>;
+				/* virtual_irq_start = <342>; */
+				interrupt-controller;
+				#interrupt-cells = <2>;
+				gpio-controller;
+				#gpio-cells=<2>;
+			};
+
+		};
+
+		streamer0: streamer@80000000 {
+			compatible = "uio,irq";
+			interrupts = <0 19 4>;
+		};
+	};
+};
+
+&spi0 {
+	status = "okay";
+
+	/* CMV50K SPI interface */
+	spidev@0 {
+		compatible = "cmosis,cmv50000";
+		spi-max-frequency = <1000000>;
+		reg = <0>;
+	};
+
+};
+
+&i2c1 {
+	status = "okay";
+	clock-frequency = <100000>;
+        i2c-sda-hold-time-ns = <500>;
+
+
+	/* USB IO Tri-Color LED */
+	/* disabled - used directly by ARM software */
+	/* 
+	led@62 {
+		compatible = "nxp,pca9553";
+		reg = <0x62>;
+	}; */
+
+	/* Sensor board */
+
+};
+
+/* FX3 comms interface */
+&uart0 {
+	status = "okay";
+};
+

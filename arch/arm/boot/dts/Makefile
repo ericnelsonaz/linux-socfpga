@@ -701,6 +701,8 @@ dtb-$(CONFIG_ARCH_SOCFPGA) += \
 	mitycam_bae_HWK1411.dtb \
 	mitycam_battelle_g2.dtb \
 	mitycam_cmv50000_evk.dtb \
+	mitycam_csg14000_evk.dtb \
+	mitycam_hsroic.dtb \
 	mitycam_cmv8000_u3v.dtb \
 	mitycam_ccd_ge.dtb \
 	mitycam_carterra_lsa.dtb \
