@@ -30,7 +30,23 @@
 	memory {
 		name = "memory";
 		device_type = "memory";
-		reg = <0x0 0x40000000>; /* 1 GB */
+		reg = <0x0 0x40000000>; /* 1 GB (updated by uBoot during boot for larger devices) */
+	};
+
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		/** reserved memory, FPGA ring buffer (RAMStreamer).  Must match
+		 *  ram_cfg.ini and definition for cmemk.ko module loader until
+		 *  design migrates to cmemk + CMA (dynamic allocation) scheme.
+		 */
+		ring_buffer_reserved: ring_buffer@20000000 {
+			reg = <0x20000000 0x20000000>;
+			no-map;
+			status = "okay";
+		};
 	};
 
 	aliases {
