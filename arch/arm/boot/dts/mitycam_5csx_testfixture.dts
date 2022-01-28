@@ -1,0 +1,466 @@
+/*
+ *  Copyright (C) 2012 Altera Corporation <www.altera.com>
+ *
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ */
+
+/dts-v1/;
+#include "socfpga.dtsi"
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/ {
+	model = "MityCAM-5CSX-TestFixture";
+	compatible = "cl,mitycam-ccd-ge", "altr,socfpga-cyclone5", "altr,socfpga";
+
+	chosen {
+		bootargs = "console=ttyS0,115200 root=/dev/mmcblk0p2 rw rootwait";
+	};
+
+	memory {
+		name = "memory";
+		device_type = "memory";
+		reg = <0x0 0x40000000>; /* 1 GB (updated by uBoot during boot for larger devices) */
+	};
+
+	reserved-memory {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		ranges;
+
+		/** reserved memory for CMEM for transceiver testing.
+		 */
+		ring_buffer_reserved: ring_buffer@20000000 {
+			reg = <0x20000000 0x20000000>;
+			no-map;
+			status = "okay";
+		};
+	};
+
+	aliases {
+		/* this allow the ethaddr uboot environmnet variable contents
+		 * to be added to the gmac1 device tree blob.
+		 */
+		ethernet0 = &gmac1;
+	};
+
+	soc {
+		clkmgr@ffd04000 {
+			clocks {
+				osc1 {
+					clock-frequency = <25000000>;
+				};
+			};
+		};
+
+		dwmmc0@ff704000 {
+			num-slots = <1>;
+			supports-highspeed;
+			broken-cd;
+			altr,dw-mshc-ciu-div = <3>;
+			altr,dw-mshc-sdr-timing = <0 3>;
+			bus-width = <4>;
+			status = "okay";
+		};
+
+		i2c0: i2c@ffc04000 {
+			speed-mode = <0>;
+			status = "okay";
+		};
+
+		i2c1: i2c@ffc05000 {
+			speed-mode = <0>;
+			status = "okay";
+		};
+
+		qspi: spi@ff705000 {
+			compatible = "cadence,qspi";
+                        #address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0xff705000 0x1000>,
+				<0xffa00000 0x1000>;
+			interrupts = <0 151 4>;
+			master-ref-clk = <400000000>;
+			ext-decoder = <0>;  /* external decoder */
+			num-chipselect = <4>;
+			fifo-depth = <128>;
+			bus-num = <2>;
+
+			flash0: n25q00@0 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "n25q00";
+				reg = <0>;      /* chip select */
+				spi-max-frequency = <10000000>;
+				m25p,fast-read;
+				page-size = <256>;
+				block-size = <16>; /* 2^16, 64KB */
+				read-delay = <4>;  /* delay value in read data capture register */
+				tshsl-ns = <50>;
+				tsd2d-ns = <50>;
+				tchsh-ns = <4>;
+				tslch-ns = <4>;
+
+				partition@qspi-preloader {
+					/* 64 KB for preloader image 0-3. */
+					label = "Preloader Image 0-3";
+					reg = <0x0 0x40000>;
+				};
+				partition@qspi-ubootenv {
+					/* 64 KB for u-Boot Env. */
+					label = "U-Boot Env";
+					reg = <0x40000 0x10000>;
+				};
+				partition@qspi-dtb {
+					/* 64 KB for DTB */
+					label = "DTB";
+					reg = <0x50000 0x10000>;
+				};
+				partition@qspi-uboot {
+					/* 512 KB for U-Boot */
+					label = "U-Boot";
+					reg = <0x60000 0x80000>;
+				};
+				partition@qspi-kernel {
+					/* 8 MB for Kernel */
+					label = "Kernel";
+					reg = <0xE0000 0x800000>;
+				};
+				partition@qspi-rootfs {
+					/* 7.125 MB for jffs2 data. */
+					label = "Flash 0 jffs2 Filesystem";
+					reg = <0x8E0000 0x720000>;
+				};
+			};
+
+			flash1: n25q00@1 {
+				#address-cells = <1>;
+				#size-cells = <1>;
+				compatible = "n25q00";
+				reg = <1>;      /* chip select */
+				spi-max-frequency = <10000000>;
+				m25p,fast-read;
+				page-size = <256>;
+				block-size = <16>; /* 2^16, 64KB */
+				read-delay = <4>;  /* delay value in read data capture register */
+				tshsl-ns = <50>;
+				tsd2d-ns = <50>;
+				tchsh-ns = <4>;
+				tslch-ns = <4>;
+
+				partition@0 {
+					/* 16MB for raw data. */
+					label = "Flash 1 Filesystem";
+					reg = <0x0 0x1000000>;
+				};
+			};
+		};
+
+		timer0@ffc08000 {
+			clock-frequency = <100000000>;
+		};
+
+		timer1@ffc09000 {
+			clock-frequency = <100000000>;
+		};
+
+		timer2@ffd00000 {
+			clock-frequency = <25000000>;
+		};
+
+		timer3@ffd01000 {
+			clock-frequency = <25000000>;
+		};
+
+		serial0@ffc02000 {
+			clock-frequency = <100000000>;
+		};
+
+		serial1@ffc03000 {
+			clock-frequency = <100000000>;
+		};
+
+		sysmgr@ffd08000 {
+			cpu1-start-addr = <0xffd080c4>;
+		};
+
+		usb1: usb@ffb40000 {
+			compatible = "snps,dwc2-vbus-ext";
+			status = "okay";
+		};
+
+		gpio@ff708000 {
+			/* HPS_GPIO0 -> HPS_GPIO28*/
+			status = "okay";
+			porta: gpio-controller@0 {
+				gpio-line-names = /* 0 */ "", "", "", "", "", "", "", "", 
+								  /* 8 */ "", "USB_RESET_N", "", "", "", "", "", "", 
+								  /* 16 */ "", "", "", "", "", "", "", "",
+								  /* 24 */ "", "", "", "", "ETH_RESET_N";
+			};
+		};
+
+		gpio@ff709000 {
+			/* HPS_GPIO29 -> HPS_GPIO57 */
+			status = "okay";
+			portb: gpio-controller@0 {
+				gpio-line-names = /* 29 */ "", "", "", "", "", "", "", "", 
+								  /* 37 */ "", "", "", "", "", "", "", "", 
+								  /* 45 */ "", "", "", "", "J201-60", "J201-68", "J201-64", "J201-54",
+								  /* 53 */ "J201-62", "J201-56", "J201-66", "J201-58", "";
+			};
+		};
+
+		gpio@ff70a000 {
+			/* HPS_GPIO58 -> HPS_GPIO66 */
+			status = "okay";
+			portc: gpio-controller@0 {
+				gpio-line-names = "", "", "", "J201-51", "", "", "", "", 
+								  "";
+			};
+		};
+
+		streamer0: streamer@20000000 {
+			compatible = "uio,irq";
+			interrupts = <0 41 4>;
+		};
+
+		gmac1: ethernet@ff702000 {
+			status = "okay";
+		};
+
+		hps_lw_bus: bus@0ff200000 {
+			compatible = "simple-bus";
+			reg = <0xFF200000 0x00200000>;
+			#address-cells = <1>;
+			#size-cells = <1>;
+			ranges = <0x0 0xFF200000 0x00200000>;
+			status = "okay";
+
+			sysid_qsys: sysid@0000 {
+				compatible = "altr,sysid-1.0";
+				reg = <0x000000 0x08>;
+			};
+
+			sen_loopback_1: altr_pio@1000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00001000 0x10>;
+				altr,ngpio = <32>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				gpio-line-names = 
+					"J201-106", /* 0 */
+					"J201-104", /* 1 */
+					"J201-102", /* 2 */
+					"J201-100", /* 3 */
+					"J201-98", /* 4 */
+					"J201-96", /* 5 */
+					"J201-94", /* 6 */
+					"J201-92", /* 7 */
+					"J201-88", /* 8 */
+					"J201-86", /* 9 */
+					"J201-84", /* 10 */
+					"J201-82", /* 11 */
+					"J201-80", /* 12 */
+					"J201-78", /* 13 */
+					"J201-76", /* 14 */
+					"J201-74", /* 15 */
+					"J201-70", /* 16 */
+					"J201-62", /* 17 */
+					"J201-48", /* 18 */
+					"J201-46", /* 19 */
+					"J201-44", /* 20 */
+					"J201-42", /* 21 */
+					"J201-40", /* 22 */
+					"J201-38", /* 23 */
+					"J201-36", /* 24 */
+					"J201-34", /* 25 */
+					"J201-30", /* 26 */
+					"J201-28", /* 27 */
+					"J201-26", /* 28 */
+					"J201-24", /* 29 */
+					"J201-22", /* 30 */
+					"J201-20"; /* 31 */
+			};
+
+			sen_loopback_2: altr_pio@2000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00002000 0x10>;
+				altr,ngpio = <32>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				gpio-line-names = 
+					"J201-18", /* 32 */
+					"J201-16", /* 33 */
+					"J201-105", /* 34 */
+					"J201-103", /* 35 */
+					"J201-101", /* 36 */
+					"J201-99", /* 37 */
+					"J201-97", /* 38 */
+					"J201-95", /* 39 */
+					"J201-93", /* 40 */
+					"J201-91", /* 41 */
+					"J201-87", /* 42 */
+					"J201-85", /* 43 */
+					"J201-81", /* 44 */
+					"J201-79", /* 45 */
+					"J201-77", /* 46 */
+					"J201-75", /* 47 */
+					"J201-69", /* 48 */
+					"J201-67", /* 49 */
+					"J201-73", /* 50 */
+					"J201-47", /* 51 */
+					"J201-57", /* 52 */
+					"J201-55", /* 53 */
+					"J201-45", /* 54 */
+					"J201-43", /* 55 */
+					"J201-41", /* 56 */
+					"J201-39", /* 57 */
+					"J201-35", /* 58 */
+					"J201-33", /* 59 */
+					"J201-29", /* 60 */
+					"J201-27", /* 61 */
+					"J201-25", /* 62 */
+					"J201-23"; /* 63 */
+			};
+
+			sen_loopback_3: altr_pio@3000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00003000 0x10>;
+				altr,ngpio = <8>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				gpio-line-names = 
+					"J201-21", /* 64 */
+					"J201-19", /* 65 */
+					"J201-17", /* 66 */
+					"J201-15", /* 67 */
+					"J201-12", /* 68 */
+					"J201-10", /* 69 */
+					"J201-6",  /* 70 */
+					"J201-4";  /* 71 */
+			};
+
+			sen_power_1: altr_pio@4000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00004000 0x10>;
+				altr,ngpio = <32>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				gpio-line-names = 
+					"J200-21", /* 0 */
+					"J200-23", /* 1 */
+					"J200-27", /* 2 */
+					"J200-29", /* 3 */
+					"J200-31", /* 4 */
+					"J200-33", /* 5 */
+					"J200-35", /* 6 */
+					"J200-37", /* 7 */
+					"J200-39", /* 8 */
+					"J200-41", /* 9 */
+					"J200-51", /* 10 */
+					"J200-53", /* 11 */
+					"J200-55", /* 12 */
+					"J200-57", /* 13 */
+					"J200-59", /* 14 */
+					"J200-61", /* 15 */
+					"J200-65", /* 16 */
+					"J200-63", /* 17 */
+					"J200-20", /* 18 */
+					"J200-22", /* 19 */
+					"J200-24", /* 20 */
+					"J200-26", /* 21 */
+					"J200-28", /* 22 */
+					"J200-30", /* 23 */
+					"J200-32", /* 24 */
+					"J200-34", /* 25 */
+					"J200-36", /* 26 */
+					"J200-38", /* 27 */
+					"J200-40", /* 28 */
+					"J200-42", /* 29 */
+					"J200-46", /* 30 */
+					"J200-48"; /* 31 */
+			};
+
+			sen_power_2: altr_pio@5000 {
+				compatible = "altr,pio-1.0";
+				reg = <0x00005000 0x10>;
+				altr,ngpio = <10>;
+				#gpio-cells = <2>;
+				gpio-controller;
+				gpio-line-names = 
+					"J200-54", /* 32 */
+					"J200-52", /* 33 */
+					"J200-56", /* 34 */
+					"J200-58", /* 35 */
+					"J200-60", /* 36 */
+					"J200-62", /* 37 */
+					"J200-64", /* 38 */
+					"J200-66", /* 39 */
+					"J200-45", /* 40 */
+					"J200-47"; /* 41 */
+			};
+		};
+	};
+
+};
+
+&watchdog0 {
+	status = "okay";
+};
+
+&i2c0 {
+	/* on SOM */
+	led@42 {
+		device_type = "led";
+		compatible = "ams,as3668";
+		reg = <0x42>;
+	};
+	/* on SOM */
+	eeprom@50 {
+		compatible = "fmd,24c16";
+		reg = <0x50>;
+	};
+	/* on SOM */
+	rtc@69 {
+		device_type = "rtc";
+		compatible = "abracon,ab1805";
+		reg = <0x69>;
+	};
+};
+
+ &i2c1 {
+	/* Ethernet Board */
+	eeprom@55 {
+		compatible = "microchip,24c128";
+		reg = <0x55>;
+	};
+
+	/* Test fixture loopback board */
+	eeprom@50 {
+		compatible = "microchip,24c128";
+		reg = <0x50>;
+	};
+};
+
+&flash0 {
+	status = "okay";
+};
+
+&flash1 {
+	status = "okay";
+};
+
+&usb1 {
+	status = "okay";
+};
