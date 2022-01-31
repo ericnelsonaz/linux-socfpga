@@ -84,32 +84,32 @@
 		};
 
 		qspi: spi@ff705000 {
-			compatible = "cadence,qspi";
+			compatible = "cdns,qspi-nor";
                         #address-cells = <1>;
 			#size-cells = <0>;
 			reg = <0xff705000 0x1000>,
-				<0xffa00000 0x1000>;
+			      <0xffa00000 0x1000>;
 			interrupts = <0 151 4>;
-			master-ref-clk = <400000000>;
-			ext-decoder = <0>;  /* external decoder */
-			num-chipselect = <4>;
-			fifo-depth = <128>;
-			bus-num = <2>;
+			cdns,fifo-depth = <128>;
+			cdns,fifo-width = <4>;
+			cdns,trigger-address = <0x00000000>;
+			clocks = <&qspi_clk>;
+			status = "okay";
 
-			flash0: n25q00@0 {
+			flash0: nor@0 {
 				#address-cells = <1>;
 				#size-cells = <1>;
-				compatible = "n25q00";
+				compatible = "n25q128a11", "jedec,spi-nor";
 				reg = <0>;      /* chip select */
-				spi-max-frequency = <10000000>;
+				spi-max-frequency = <108000000>;
 				m25p,fast-read;
 				page-size = <256>;
 				block-size = <16>; /* 2^16, 64KB */
-				read-delay = <4>;  /* delay value in read data capture register */
-				tshsl-ns = <50>;
-				tsd2d-ns = <50>;
-				tchsh-ns = <4>;
-				tslch-ns = <4>;
+				cdns,read-delay = <4>;  /* delay value in read data capture register */
+				cdns,tshsl-ns = <50>;
+				cdns,tsd2d-ns = <50>;
+				cdns,tchsh-ns = <4>;
+				cdns,tslch-ns = <4>;
 
 				partition@qspi-preloader {
 					/* 64 KB for preloader image 0-3. */
@@ -138,7 +138,7 @@
 				};
 				partition@qspi-rootfs {
 					/* 7.125 MB for jffs2 data. */
-					label = "Flash 0 jffs2 Filesystem";
+					label = "FPGA";
 					reg = <0x8E0000 0x720000>;
 				};
 			};
@@ -146,17 +146,17 @@
 			flash1: n25q00@1 {
 				#address-cells = <1>;
 				#size-cells = <1>;
-				compatible = "n25q00";
+				compatible = "n25q128a11", "jedec,spi-nor";
 				reg = <1>;      /* chip select */
-				spi-max-frequency = <10000000>;
+				spi-max-frequency = <108000000>;
 				m25p,fast-read;
 				page-size = <256>;
 				block-size = <16>; /* 2^16, 64KB */
-				read-delay = <4>;  /* delay value in read data capture register */
-				tshsl-ns = <50>;
-				tsd2d-ns = <50>;
-				tchsh-ns = <4>;
-				tslch-ns = <4>;
+				cdns,read-delay = <4>;  /* delay value in read data capture register */
+				cdns,tshsl-ns = <50>;
+				cdns,tsd2d-ns = <50>;
+				cdns,tchsh-ns = <4>;
+				cdns,tslch-ns = <4>;
 
 				partition@0 {
 					/* 16MB for raw data. */
@@ -276,7 +276,7 @@
 					"J201-76", /* 14 */
 					"J201-74", /* 15 */
 					"J201-70", /* 16 */
-					"J201-62", /* 17 */
+					"J201-52", /* 17 */
 					"J201-48", /* 18 */
 					"J201-46", /* 19 */
 					"J201-44", /* 20 */
@@ -360,10 +360,10 @@
 				gpio-line-names = 
 					"J200-21", /* 0 */
 					"J200-23", /* 1 */
-					"J200-27", /* 2 */
-					"J200-29", /* 3 */
-					"J200-31", /* 4 */
-					"J200-33", /* 5 */
+					"J200-29", /* 2 */
+					"J200-27", /* 3 */
+					"J200-33", /* 4 */
+					"J200-31", /* 5 */
 					"J200-35", /* 6 */
 					"J200-37", /* 7 */
 					"J200-39", /* 8 */
