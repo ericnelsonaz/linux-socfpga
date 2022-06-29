@@ -706,6 +706,7 @@ dtb-$(CONFIG_ARCH_SOCFPGA) += \
 	mitycam_hsroic.dtb \
 	mitycam_cmv2k4k_gige.dtb \
 	mitycam_cmv8000_u3v.dtb \
+	mitycam_cmv12000_u3v.dtb \
 	mitycam_ccd_ge.dtb \
 	mitycam_carterra_lsa.dtb \
 	mitycam_canon_35MMFHDXS.dtb \
