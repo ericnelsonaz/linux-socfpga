@@ -1154,7 +1154,7 @@ static int adp5589_keypad_add(struct adp5589_kpad *kpad, unsigned int revid)
 
 	error = devm_request_threaded_irq(&client->dev, client->irq,
 					  NULL, adp5589_irq,
-					  IRQF_TRIGGER_FALLING | IRQF_ONESHOT,
+					  IRQF_TRIGGER_RISING | IRQF_ONESHOT,
 					  client->dev.driver->name, kpad);
 	if (error) {
 		dev_err(&client->dev, "unable to request irq %d\n", client->irq);
