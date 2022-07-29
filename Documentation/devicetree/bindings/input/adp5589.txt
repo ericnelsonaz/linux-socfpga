@@ -1,0 +1,63 @@
+Binding for the Analog Devices ADP5589 matrix decoder. The ADP5589 is a
+complex chip with many functions including matrix keypad decoding, reset
+event generator and gpio expansion. DT support is limited to keypad
+decoding.
+
+Required properties:
+
+- compatible: Should be "adi,adp5589"
+
+- linux,keymap: An array of packed cells each describing a mapping from
+a key to a linux keycode, as described in [1]. The macro MATRIX_KEY can
+be used to construct each mapping.
+
+Optional properties:
+
+- adp5589,scan-cycle-time-ms: The time between keymap polls in ms.
+Supported valued are 10, 20, 30 and 40. Other values are silently
+rounded down to the nearest supported value. Default: 10ms.
+
+- linux,no-autorepeat: Disable key auto repeat.
+
+- adp5589,pulldown-300k
+- adp5589,pullup-300k
+- adp5589,pullup-100k
+- adp5589,pull-disable: Set pull up/down/disable for the chip lines.
+Each is an OR'd value constructed with the macros ADP_COL and ADP_ROW.
+You can also use ~0 to specify all lines. It is an error for any two of
+these values have bits in common, and the driver will not load if so.
+
+Example node:
+
+&i2c0 {
+	keyboard {
+		compatible = "adi,adp5589";
+		reg = <0x34>;
+
+		pinctrl-names = "default";
+		pinctrl-0 = <&kb_pins>;
+
+		interrupt-parent = <&gpio1>;
+		interrupts = <19 GPIO_ACTIVE_HIGH>;
+
+		adp5589,scan-cycle-time-ms = <40>;
+
+		/* pull up all lines with a 300k resistor */
+		adp5589,pullup-300k = < (~0) >;
+
+		linux,no-autorepeat;
+		linux,keymap = <
+			MATRIX_KEY(0, 0, KEY_0)
+			MATRIX_KEY(0, 1, KEY_1)
+			MATRIX_KEY(0, 2, KEY_2)
+
+			MATRIX_KEY(1, 0, KEY_F1)
+			MATRIX_KEY(1, 1, KEY_F2)
+			MATRIX_KEY(1, 2, KEY_F3)
+		>;
+	}
+}
+
+-------
+
+[1] Documentation/devicetree/bindings/input/matrix-keymap.txt
