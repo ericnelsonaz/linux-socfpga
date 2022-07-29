@@ -137,7 +137,7 @@ struct adp5589_gpi_map {
 #define ADP5585_ROW_MASK		0x3F
 #define ADP5585_COL_MASK		0x1F
 #define ADP5585_ROW_SHIFT		0
-#define ADP5585_COL_SHIFT		6
+#define ADP5585_COL_SHIFT		8
 #define ADP5585_MAX_ROW_NUM		5
 #define ADP5585_MAX_COL_NUM		4
 
@@ -147,9 +147,12 @@ struct adp5589_gpi_map {
 /* Put one of these structures in i2c_board_info platform_data */
 
 struct adp5589_kpad_platform_data {
+	int model;                      /* enum model ADP5585/89/etc */
 	unsigned keypad_en_mask;	/* Keypad (Rows/Columns) enable mask */
 	const unsigned short *keymap;	/* Pointer to keymap */
 	unsigned short keymapsize;	/* Keymap size */
+	unsigned short rows;            /* Number of rows */
+	unsigned short cols;            /* Number of columns */
 	bool repeat;			/* Enable key repeat */
 	bool en_keylock;		/* Enable key lock feature (ADP5589 only)*/
 	unsigned char unlock_key1;	/* Unlock Key 1 (ADP5589 only) */

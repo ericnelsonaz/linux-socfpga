@@ -255,6 +255,10 @@ static struct of_device_id adp5589_of_match[] = {
 		.compatible = "adi,adp5589",
 		.data = (void *)ADP5589
 	},
+	{
+		.compatible = "adi,adp5585",
+		.data = (void *)ADP5585_01
+	},
 	{ },
 };
 
@@ -833,9 +837,9 @@ static void adp5589_report_switch_state(struct adp5589_kpad *kpad)
 }
 
 #ifdef CONFIG_OF
-static int adp5589_key(int row, int col)
+static int adp5589_key(int row, int col, struct adp5589_kpad_platform_data *pdata)
 {
-	return col + row * 11;
+	return col + row * pdata->cols;
 }
 
 static int adp5589_dt_read_keymap(struct device *dev,
@@ -860,11 +864,27 @@ static int adp5589_dt_read_keymap(struct device *dev,
 
 	keymap_len /= sizeof(u32);
 
-	keymap = devm_kzalloc(dev, ADP5589_KEYMAPSIZE * sizeof(u32),
-			      GFP_KERNEL);
+	keymap = devm_kzalloc(dev, ADP5589_KEYMAPSIZE * sizeof(u16), GFP_KERNEL);
 	if (!keymap)
 		return -ENOMEM;
 
+	switch (pdata->model) {
+	case ADP5585_02:
+		pdata->cols = ADP5585_MAX_COL_NUM+1;
+		pdata->rows = ADP5585_MAX_ROW_NUM+1;
+		pdata->keymapsize = ADP5585_KEYMAPSIZE;
+		break;
+	case ADP5585_01:
+		pdata->cols = ADP5585_MAX_COL_NUM+1;
+		pdata->rows = ADP5585_MAX_ROW_NUM+1;
+		pdata->keymapsize = ADP5585_KEYMAPSIZE;
+		break;
+	case ADP5589:
+		pdata->cols = ADP5589_MAX_COL_NUM+1;
+		pdata->rows = ADP5589_MAX_ROW_NUM+1;
+		pdata->keymapsize = ADP5589_KEYMAPSIZE;
+		break;
+	}
 	for (i = 0; i < keymap_len; i++) {
 		u32 val;
 		u16 key;
@@ -888,12 +908,12 @@ static int adp5589_dt_read_keymap(struct device *dev,
 
 		pdata->keypad_en_mask |= ADP_ROW(row);
 		pdata->keypad_en_mask |= ADP_COL(col);
+		dev_dbg(dev, "ROW %d COL %d KEY %d %08x\n",row,col,key, pdata->keypad_en_mask);
 
-		keymap[adp5589_key(row, col)] = key;
+		keymap[adp5589_key(row, col, pdata)] = key;
 	}
 
 	pdata->keymap = keymap;
-	pdata->keymapsize = ADP5589_KEYMAPSIZE;
 
 	return 0;
 }
@@ -986,22 +1006,39 @@ adp5589_get_dt_data(struct device *dev, int *dev_type)
 	struct adp5589_kpad_platform_data *pdata;
 	int error;
 
-	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
-
-	if (!pdata)
-		return ERR_PTR(-ENOMEM);
-
 	node = dev->of_node;
 	if (!node) {
 		dev_err(dev, "dt node does not exist\n");
 		return ERR_PTR(-ENODEV);
 	}
+	match = of_match_node(adp5589_of_match, node);
+	if(!match) {
+		dev_err(dev, "No device match in table\n");
+		return ERR_PTR(-ENXIO);
+	}
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
 
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
+
+
+	pdata->model = (int)match->data;
 	error = adp5589_dt_fill(dev, pdata, node);
 	if (error)
 		return ERR_PTR(error);
 
-	*dev_type = (uintptr_t)match->data;
+	*dev_type = (uintptr_t)pdata->model;
+	switch (pdata->model) {
+	case ADP5585_02:
+		pdata->keymapsize = ADP5585_KEYMAPSIZE;
+		break;
+	case ADP5585_01:
+		pdata->keymapsize = ADP5585_KEYMAPSIZE;
+		break;
+	case ADP5589:
+		pdata->keymapsize = ADP5589_KEYMAPSIZE;
+		break;
+	}
 	dev->platform_data = pdata;
 
 	return pdata;
@@ -1031,7 +1068,7 @@ static int adp5589_keypad_add(struct adp5589_kpad *kpad, unsigned int revid)
 	}
 
 	if (pdata->keymapsize != kpad->var->keymapsize) {
-		dev_err(&client->dev, "invalid keymapsize\n");
+		dev_err(&client->dev, "invalid keymapsize %d != %d\n",pdata->keymapsize,kpad->var->keymapsize);
 		return -EINVAL;
 	}
 
@@ -1132,6 +1169,10 @@ static void adp5589_clear_config(void *data)
 	struct i2c_client *client = data;
 	struct adp5589_kpad *kpad = i2c_get_clientdata(client);
 
+	if(!kpad) {
+		dev_err(&client->dev, "adp5589_clear_config - no device\n");
+		return;
+	}
 	adp5589_write(client, kpad->var->reg(ADP5589_GENERAL_CFG), 0);
 }
 
@@ -1172,7 +1213,7 @@ static int adp5589_probe(struct i2c_client *client,
 
 	kpad->client = client;
 
-	switch (id->driver_data) {
+	switch (dev_type) {
 	case ADP5585_02:
 		kpad->support_row5 = true;
 		/* fall through */
