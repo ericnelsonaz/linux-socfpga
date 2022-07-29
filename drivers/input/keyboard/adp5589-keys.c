@@ -20,7 +20,10 @@
 #include <linux/i2c.h>
 #include <linux/gpio/driver.h>
 #include <linux/slab.h>
+#include <linux/of.h>
+#include <linux/err.h>
 
+#include <linux/input/matrix_keypad.h>
 #include <linux/input/adp5589.h>
 
 /* ADP5589/ADP5585 Common Registers */
@@ -245,6 +248,14 @@ struct adp5589_kpad {
 	u8 dat_out[3];
 	u8 dir[3];
 #endif
+};
+
+static struct of_device_id adp5589_of_match[] = {
+	{
+		.compatible = "adi,adp5589",
+		.data = (void *)ADP5589
+	},
+	{ },
 };
 
 /*
@@ -821,6 +832,188 @@ static void adp5589_report_switch_state(struct adp5589_kpad *kpad)
 	input_sync(kpad->input);
 }
 
+#ifdef CONFIG_OF
+static int adp5589_key(int row, int col)
+{
+	return col + row * 11;
+}
+
+static int adp5589_dt_read_keymap(struct device *dev,
+				  struct adp5589_kpad_platform_data *pdata,
+				  const struct device_node *node)
+{
+	int i;
+	const u32 *dt_keymap;
+	unsigned short *keymap;
+	int keymap_len;
+
+	dt_keymap = of_get_property(node, "linux,keymap", &keymap_len);
+	if (!dt_keymap) {
+		dev_err(dev, "missing dt keymap\n");
+		return -ENODEV;
+	}
+
+	if (keymap_len % sizeof(u32)) {
+		dev_err(dev, "malformed keymap (len=%i)\n", keymap_len);
+		return -EINVAL;
+	}
+
+	keymap_len /= sizeof(u32);
+
+	keymap = devm_kzalloc(dev, ADP5589_KEYMAPSIZE * sizeof(u32),
+			      GFP_KERNEL);
+	if (!keymap)
+		return -ENOMEM;
+
+	for (i = 0; i < keymap_len; i++) {
+		u32 val;
+		u16 key;
+		u8 row, col;
+
+		val = be32_to_cpup(&dt_keymap[i]);
+
+		row = KEY_ROW(val);
+		col = KEY_COL(val);
+		key = KEY_VAL(val);
+
+		if (row > ADP5589_MAX_ROW_NUM) {
+			dev_err(dev, "invalid row number (%i)\n", row);
+			return -EINVAL;
+		}
+
+		if (col > ADP5589_MAX_COL_NUM) {
+			dev_err(dev, "invalid column number (%i)\n", col);
+			return -EINVAL;
+		}
+
+		pdata->keypad_en_mask |= ADP_ROW(row);
+		pdata->keypad_en_mask |= ADP_COL(col);
+
+		keymap[adp5589_key(row, col)] = key;
+	}
+
+	pdata->keymap = keymap;
+	pdata->keymapsize = ADP5589_KEYMAPSIZE;
+
+	return 0;
+}
+
+static int adp5589_dt_read_pulls(struct device *dev,
+				 struct adp5589_kpad_platform_data *pdata,
+				 const struct device_node *node)
+{
+	unsigned i;
+
+	pdata->pull_dis_mask = 0;
+	pdata->pullup_en_300k = 0;
+	pdata->pullup_en_100k = 0;
+	pdata->pulldown_en_300k = 0;
+
+	of_property_read_u32(node, "adp5589,pulldown-300k",
+			&pdata->pulldown_en_300k);
+
+	of_property_read_u32(node, "adp5589,pullup-300k",
+			&pdata->pullup_en_300k);
+
+	of_property_read_u32(node, "adp5589,pullup-100k",
+			&pdata->pullup_en_100k);
+
+	of_property_read_u32(node, "adp5589,pull-disable",
+			&pdata->pull_dis_mask);
+
+	/* Check for misconfiguration */
+	for (i = 1; i != 0; i <<= 1) {
+		int s = 0;
+
+		if (pdata->pulldown_en_300k & i)
+			s++;
+		if (pdata->pullup_en_300k & i)
+			s++;
+		if (pdata->pullup_en_100k & i)
+			s++;
+		if (pdata->pull_dis_mask & i)
+			s++;
+
+		if (s > 1) {
+			dev_err(dev, "misconfigured pull resistors\n");
+			return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
+static int adp5589_ms_to_cycle_time(unsigned t)
+{
+	if (t >= 40)
+		return ADP5589_SCAN_CYCLE_40ms;
+	else if (t >= 30)
+		return ADP5589_SCAN_CYCLE_30ms;
+	else if (t >= 20)
+		return ADP5589_SCAN_CYCLE_20ms;
+	else
+		return ADP5589_SCAN_CYCLE_10ms;
+}
+
+static int adp5589_dt_fill(struct device *dev,
+			   struct adp5589_kpad_platform_data *pdata,
+			   const struct device_node *node)
+{
+	int error;
+	u32 t;
+
+	error = adp5589_dt_read_keymap(dev, pdata, node);
+	if (error)
+		return error;
+
+	error = adp5589_dt_read_pulls(dev, pdata, node);
+	if (error)
+		return error;
+
+	if (!of_property_read_u32(node, "adp5589,scan-cycle-time-ms", &t))
+		pdata->scan_cycle_time = adp5589_ms_to_cycle_time(t);
+
+	pdata->repeat = !of_property_read_bool(node, "linux,no-autorepeat");
+
+	return 0;
+}
+
+static struct adp5589_kpad_platform_data *
+adp5589_get_dt_data(struct device *dev, int *dev_type)
+{
+	struct device_node *node;
+	const struct of_device_id *match;
+	struct adp5589_kpad_platform_data *pdata;
+	int error;
+
+	pdata = devm_kzalloc(dev, sizeof(*pdata), GFP_KERNEL);
+
+	if (!pdata)
+		return ERR_PTR(-ENOMEM);
+
+	node = dev->of_node;
+	if (!node) {
+		dev_err(dev, "dt node does not exist\n");
+		return ERR_PTR(-ENODEV);
+	}
+
+	error = adp5589_dt_fill(dev, pdata, node);
+	if (error)
+		return ERR_PTR(error);
+
+	*dev_type = (uintptr_t)match->data;
+	dev->platform_data = pdata;
+
+	return pdata;
+}
+#else
+static struct adp5589_kpad_platform_data *
+adp5589_get_dt_data(struct device *dev, int *dev_type)
+{
+	return ERR_PTR(-ENODEV);
+}
+#endif
+
 static int adp5589_keypad_add(struct adp5589_kpad *kpad, unsigned int revid)
 {
 	struct i2c_client *client = kpad->client;
@@ -950,11 +1143,22 @@ static int adp5589_probe(struct i2c_client *client,
 		dev_get_platdata(&client->dev);
 	unsigned int revid;
 	int error, ret;
+	int dev_type = 0;
 
 	if (!i2c_check_functionality(client->adapter,
 				     I2C_FUNC_SMBUS_BYTE_DATA)) {
 		dev_err(&client->dev, "SMBUS Byte Data not Supported\n");
 		return -EIO;
+	}
+
+	if (!pdata) {
+		/* Try with device tree */
+		pdata = adp5589_get_dt_data(&client->dev, &dev_type);
+
+		if (IS_ERR(pdata))
+			pdata = NULL;
+	} else {
+		dev_type = id->driver_data;
 	}
 
 	if (!pdata) {
@@ -1052,7 +1256,9 @@ MODULE_DEVICE_TABLE(i2c, adp5589_id);
 static struct i2c_driver adp5589_driver = {
 	.driver = {
 		.name = KBUILD_MODNAME,
+		.owner = THIS_MODULE,
 		.pm = &adp5589_dev_pm_ops,
+		.of_match_table = adp5589_of_match,
 	},
 	.probe = adp5589_probe,
 	.id_table = adp5589_id,
