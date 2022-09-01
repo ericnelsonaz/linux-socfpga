@@ -69,7 +69,7 @@
 				/* #interrupt-cells = <1>; */
 				/* interrupt-controller; */
 				gpio-line-names = "SYS_RES_N", "", "", "",
-						  "DDC_ENABLE_N", "PS_ON", "4V_PS_ON", "",
+						  "DDC_ENABLE_N", "PS_ON", "PS_4V_ON", "",
 						  "", "", "", "",
 						  "", "", "", "",
 						  "", "", "", "",
