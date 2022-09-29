@@ -42,7 +42,7 @@
 				compatible = "altr,pio-1.0";
 				reg = <0x00001000 0x10>;
 				altr,ngpio = <32>;
-				interrupts = <0 23 4>;
+				interrupts = <0 24 4>;
 				altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
 				#gpio-cells = <2>;
 				gpio-controller;
@@ -76,7 +76,7 @@
 						  "", "", "", "",
 						  "", "", "", "",
 						  "", "", "", "";
-		};
+			};
 
 			pio_fx3: gpio@03000 {
 				compatible = "altr,pio-1.0";
@@ -98,26 +98,14 @@
 				reg = <0x00004000 0x0100>;
 				interrupts = <0 26 4>;
 				master-ref-clk = <100000000>;
-				num-chipselect = <3>;
+				num-chipselect = <1>;
 				bus-num = <0>;
 
 				/* sensor */
 				spidev@1 {
 					compatible = "cl,spidev";
-					spi-max-frequency = <50000000>;
+					spi-max-frequency = <13500000>;
 					reg = <0>;
-				};
-				/* lattice */
-				spidev@2 {
-					compatible = "cl,spidev";
-					spi-max-frequency = <13500000>;
-					reg = <1>;
-				};
-				/* dummy (for lattice programming) */
-				spidev@3 {
-					compatible = "cl,spidev";
-					spi-max-frequency = <13500000>;
-					reg = <2>;
 				};
 			};
 
@@ -126,7 +114,7 @@
 			cam_gpio: gpio@06000 {
 				compatible = "cl,camio-1.0";
 				reg = <0x00006000 0x20>;
-				interrupts = <0 24 4>;
+				interrupts = <0 23 4>;
 				interrupt-controller;
 				#interrupt-cells = <2>;
 				gpio-controller;
@@ -139,6 +127,10 @@
 			/* mitycam ROW_ADJUST             @12000, managed in userspace */
 			/* mitycam PIXEL_SHIFT            @13000, managed in userspace */
 			/* mitycam STREAM_TO_SDRAM_RASTER @18000, managed in userspace */
+
+			/* TODO Jargalan Nermunkh
+			- How does IRQ 1 from FPGA document fit here?
+			- Would be <0 20 4> in dts */
 
 			/* mitycam U3V SDGMA CSR          @20000, managed in userspace */
 			/* mitycam U3V SDGMA DESC         @21000, managed in userspace */
