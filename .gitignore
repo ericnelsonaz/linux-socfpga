@@ -114,3 +114,8 @@ all.config
 
 # Kdevelop4
 *.kdev4
+
+# Build directory + build scripts
+build.sh
+push_cam.sh
+build-mitysomA10
