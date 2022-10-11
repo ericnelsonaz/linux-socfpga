@@ -128,10 +128,6 @@
 			/* mitycam PIXEL_SHIFT            @13000, managed in userspace */
 			/* mitycam STREAM_TO_SDRAM_RASTER @18000, managed in userspace */
 
-			/* TODO Jargalan Nermunkh
-			- How does IRQ 1 from FPGA document fit here?
-			- Would be <0 20 4> in dts */
-
 			/* mitycam U3V SDGMA CSR          @20000, managed in userspace */
 			/* mitycam U3V SDGMA DESC         @21000, managed in userspace */
 			/* mitycam U3V_FX3                @22000, managed in userspace */
