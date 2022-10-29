@@ -48,7 +48,7 @@
 				gpio-controller;
 				#interrupt-cells = <1>;
 				interrupt-controller;
-				gpio-line-names = "IOPLL_LOCK", "", "", "",
+				gpio-line-names = "IOPLL_LOCK", "COLOR_J101", "", "",
 						  "", "", "", "",
 						  "", "", "", "",
 						  "", "", "", "",
