@@ -97,7 +97,7 @@
 				#size-cells = <0>;
 				reg = <0x00004000 0x0100>;
 				interrupts = <0 25 4>;
-				master-ref-clk = <50000000>;
+				master-ref-clk = <100000000>;
 				num-chipselect = <8>;
 				bus-num = <3>;
 
