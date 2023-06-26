@@ -1,0 +1,157 @@
+#include "socfpga_mitysom5csx-h6-53b.dtsi"
+#include <dt-bindings/interrupt-controller/irq.h>
+
+/ {
+	aliases {
+		/* this allow the ethaddr uboot environmnet variable contents
+		 * to be added to the gmac1 device tree blob.
+		 */
+		ethernet0 = &gmac1;
+	};
+
+	gpio_keys {
+		compatible = "gpio-keys";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		/* GPIO 37 */
+		button@1 {
+			label = "Switch 1";
+			linux,code = <0x101>;
+			gpios = <&portb 8 1>;
+			debounce-interval = <100>;
+		};
+		/* GPIO 40 */
+		button@2 {
+			label = "Switch 2";
+			linux,code = <0x102>;
+			gpios = <&portb 11 1>;
+			debounce-interval = <100>;
+		};
+		/* GPIO 41 */
+		button@3 {
+			label = "Switch 3";
+			linux,code = <0x103>;
+			gpios = <&portb 12 1>;
+			debounce-interval = <100>;
+		};
+	};
+};
+
+&i2c1 {
+	speed-mode = <0>;
+	status = "okay";
+    /* Power Monitor */
+	ltc2945@6F {
+		compatible = "ltc2945";
+		reg = <0x6F>;
+    };
+};
+
+&hps_lw_bus {
+	status = "okay";
+
+	sysid_qsys: sysid@000000 {
+		compatible = "altr,sysid-1.0";
+		reg = <0x000000 0x08>;
+	};
+
+	pio_0: gpio@0020 {
+		compatible = "altr,pio-1.0";
+		reg = <0x0020 0x20>;
+		interrupts = <0 40 4>;
+		altr,gpio-bank-width = <32>;
+		altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+		#gpio-cells = <1>;
+		gpio-controller;
+		#interrupt-cells = <1>;
+		interrupt-controller;
+	};
+
+	pio_1: gpio@0040 {
+		compatible = "altr,pio-1.0";
+		reg = <0x0040 0x20>;
+		interrupts = <0 41 4>;
+		altr,gpio-bank-width = <32>;
+		altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+		#gpio-cells = <1>;
+		gpio-controller;
+		#interrupt-cells = <1>;
+		interrupt-controller;
+	};
+
+	pio_2: gpio@0060 {
+		compatible = "altr,pio-1.0";
+		reg = <0x0060 0x20>;
+		interrupts = <0 42 4>;
+		altr,gpio-bank-width = <32>;
+		altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+		#gpio-cells = <1>;
+		gpio-controller;
+		#interrupt-cells = <1>;
+		interrupt-controller;
+	};
+
+	pio_3: gpio@0080 {
+		compatible = "altr,pio-1.0";
+		reg = <0x0080 0x20>;
+		interrupts = <0 43 4>;
+		altr,gpio-bank-width = <3>;
+		altr,interrupt-type = <IRQ_TYPE_EDGE_RISING>;
+		#gpio-cells = <1>;
+		gpio-controller;
+		#interrupt-cells = <1>;
+		interrupt-controller;
+	};
+};
+
+&mmc {
+	status = "okay";
+	num-slots = <1>;
+	broken-cd;
+	cap-mmc-highspeed;
+	cap-sd-highspeed;
+	altr,dw-mshc-ciu-div = <3>;
+	altr,dw-mshc-sdr-timing = <0 3>;
+	bus-width = <4>;
+};
+
+&gmac1 {
+	status = "okay";
+	phy-mode = "rgmii";
+	
+	txd0-skew-ps = <0>;
+	txd1-skew-ps = <0>;
+	txd2-skew-ps = <0>;
+	txd3-skew-ps = <0>;
+	rxd0-skew-ps = <420>;
+	rxd1-skew-ps = <420>;
+	rxd2-skew-ps = <420>;
+	rxd3-skew-ps = <420>;
+	txen-skew-ps = <0>;
+	txc-skew-ps = <1860>;
+	rxdv-skew-ps = <420>;
+	rxc-skew-ps = <1680>;
+	
+	max-frame-size = <3800>;
+		
+	snps,reset-delays-us = <0 10000 1000000>;
+	snps,reset-gpio = <&porta 28 1>; 			
+	snps,reset-active-low;
+};
+
+&spi0 {
+	num-cs = <2>;
+	status = "okay";
+
+	spi@0 {
+		compatible = "cl,spidev";
+		reg = <0>;
+		spi-max-frequency = <1000000>;
+	};
+
+	spi@1 {
+		compatible = "cl,spidev";
+		reg = <1>;
+		spi-max-frequency = <1000000>;
+	};
+};
