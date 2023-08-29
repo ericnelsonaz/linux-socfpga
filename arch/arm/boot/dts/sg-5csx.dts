@@ -40,6 +40,11 @@
 &i2c1 {
 	speed-mode = <0>;
 	status = "okay";
+	ltc2992@0x68 {
+		compatible = "ltc2992";
+		reg = <0x68>;
+	};
+
     /* Power Monitor */
 	ltc2945@6F {
 		compatible = "ltc2945";
