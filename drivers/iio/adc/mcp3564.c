@@ -18,14 +18,17 @@
 
 #include <linux/bitfield.h>
 #include <linux/iopoll.h>
+#include <linux/mod_devicetable.h>
+#include <linux/module.h>
 #include <linux/regulator/consumer.h>
 #include <linux/spi/spi.h>
-#include <linux/units.h>
 #include <linux/util_macros.h>
 
 #include <linux/iio/iio.h>
 #include <linux/iio/sysfs.h>
 
+#define MILLI	1000UL
+#define NANO	1000000000UL
 #define MCP3564_ADCDATA_REG		0x00
 
 #define MCP3564_CONFIG0_REG		0x01
@@ -551,6 +554,22 @@ static const struct iio_chan_spec_ext_info mcp3564_ext_info[] = {
 	{ }
 };
 
+int sysfs_emit(char *buf, const char *fmt, ...)
+{
+	va_list args;
+	int len;
+
+	if (WARN(!buf || offset_in_page(buf),
+		 "invalid sysfs_emit: buf:%p\n", buf))
+		return 0;
+
+	va_start(args, fmt);
+	len = vscnprintf(buf, PAGE_SIZE, fmt, args);
+	va_end(args);
+
+	return len;
+}
+
 static ssize_t mcp3564_auto_zeroing_mux_show(struct device *dev,
 					     struct device_attribute *attr,
 					     char *buf)
@@ -634,10 +653,6 @@ static const struct iio_chan_spec mcp3564_channel_template = {
 				BIT(IIO_CHAN_INFO_CALIBSCALE)		|
 				BIT(IIO_CHAN_INFO_CALIBBIAS)		|
 				BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
-	.info_mask_shared_by_all_available = BIT(IIO_CHAN_INFO_SCALE)	|
-				BIT(IIO_CHAN_INFO_CALIBSCALE) |
-				BIT(IIO_CHAN_INFO_CALIBBIAS)		|
-				BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
 	.ext_info = mcp3564_ext_info,
 };
 
@@ -650,10 +665,6 @@ static const struct iio_chan_spec mcp3564_temp_channel_template = {
 			BIT(IIO_CHAN_INFO_CALIBSCALE)			|
 			BIT(IIO_CHAN_INFO_CALIBBIAS)			|
 			BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
-	.info_mask_shared_by_all_available = BIT(IIO_CHAN_INFO_SCALE)	|
-			BIT(IIO_CHAN_INFO_CALIBSCALE) |
-			BIT(IIO_CHAN_INFO_CALIBBIAS)			|
-			BIT(IIO_CHAN_INFO_OVERSAMPLING_RATIO),
 };
 
 static const struct iio_chan_spec mcp3564_burnout_channel_template = {
@@ -661,7 +672,6 @@ static const struct iio_chan_spec mcp3564_burnout_channel_template = {
 	.output = true,
 	.channel = 0,
 	.info_mask_separate = BIT(IIO_CHAN_INFO_RAW),
-	.info_mask_separate_available = BIT(IIO_CHAN_INFO_RAW),
 };
 
 /*
@@ -751,6 +761,31 @@ static const struct mcp3564_chip_info mcp3564_chip_infos_tbl[] = {
 	},
 };
 
+#define read_poll_timeout(op, val, cond, sleep_us, timeout_us, \
+				sleep_before_read, args...) \
+({ \
+	u64 __timeout_us = (timeout_us); \
+	unsigned long __sleep_us = (sleep_us); \
+	ktime_t __timeout = ktime_add_us(ktime_get(), __timeout_us); \
+	might_sleep_if((__sleep_us) != 0); \
+	if (sleep_before_read && __sleep_us) \
+		usleep_range((__sleep_us >> 2) + 1, __sleep_us); \
+	for (;;) { \
+		(val) = op(args); \
+		if (cond) \
+			break; \
+		if (__timeout_us && \
+		    ktime_compare(ktime_get(), __timeout) > 0) { \
+			(val) = op(args); \
+			break; \
+		} \
+		if (__sleep_us) \
+			usleep_range((__sleep_us >> 2) + 1, __sleep_us); \
+		cpu_relax(); \
+	} \
+	(cond) ? 0 : -ETIMEDOUT; \
+})
+
 static int mcp3564_read_single_value(struct iio_dev *indio_dev,
 				     struct iio_chan_spec const *channel,
 				     int *val)
@@ -790,45 +825,6 @@ static int mcp3564_read_single_value(struct iio_dev *indio_dev,
 		return -EBUSY;
 
 	return mcp3564_read_32bits(adc, MCP3564_ADCDATA_REG, val);
-}
-
-static int mcp3564_read_avail(struct iio_dev *indio_dev,
-			      struct iio_chan_spec const *channel,
-			      const int **vals, int *type,
-			      int *length, long mask)
-{
-	struct mcp3564_state *adc = iio_priv(indio_dev);
-
-	switch (mask) {
-	case IIO_CHAN_INFO_RAW:
-		if (!channel->output)
-			return -EINVAL;
-
-		*vals = mcp3564_burnout_avail[0];
-		*length = ARRAY_SIZE(mcp3564_burnout_avail) * 2;
-		*type = IIO_VAL_INT_PLUS_MICRO;
-		return IIO_AVAIL_LIST;
-	case IIO_CHAN_INFO_OVERSAMPLING_RATIO:
-		*vals = mcp3564_oversampling_avail;
-		*length = ARRAY_SIZE(mcp3564_oversampling_avail);
-		*type = IIO_VAL_INT;
-		return IIO_AVAIL_LIST;
-	case IIO_CHAN_INFO_SCALE:
-		*vals = (int *)adc->scale_tbls;
-		*length = ARRAY_SIZE(adc->scale_tbls) * 2;
-		*type = IIO_VAL_INT_PLUS_NANO;
-		return IIO_AVAIL_LIST;
-	case IIO_CHAN_INFO_CALIBBIAS:
-		*vals = mcp3564_calib_bias;
-		*type = IIO_VAL_INT;
-		return IIO_AVAIL_RANGE;
-	case IIO_CHAN_INFO_CALIBSCALE:
-		*vals = mcp3564_calib_scale;
-		*type = IIO_VAL_INT;
-		return IIO_AVAIL_RANGE;
-	default:
-		return -EINVAL;
-	}
 }
 
 static int mcp3564_read_raw(struct iio_dev *indio_dev,
@@ -997,12 +993,24 @@ static int mcp3564_write_raw(struct iio_dev *indio_dev,
 	}
 }
 
-static int mcp3564_read_label(struct iio_dev *indio_dev,
-			      struct iio_chan_spec const *chan, char *label)
+int dev_err_probe(const struct device *dev, int err, const char *fmt, ...)
 {
-	struct mcp3564_state *adc = iio_priv(indio_dev);
+	struct va_format vaf;
+	va_list args;
 
-	return sprintf(label, "%s\n", adc->labels[chan->scan_index]);
+	va_start(args, fmt);
+	vaf.fmt = fmt;
+	vaf.va = &args;
+
+	if (err != -EPROBE_DEFER) {
+		dev_err(dev, "error %pe: %pV", ERR_PTR(err), &vaf);
+	} else {
+		dev_dbg(dev, "error %pe: %pV", ERR_PTR(err), &vaf);
+	}
+
+	va_end(args);
+
+	return err;
 }
 
 static int mcp3564_parse_fw_children(struct iio_dev *indio_dev)
@@ -1017,7 +1025,6 @@ static int mcp3564_parse_fw_children(struct iio_dev *indio_dev)
 	int chan_idx = 0;
 	unsigned int num_ch;
 	u32 inputs[2];
-	const char *node_name;
 	const char *label;
 	int ret;
 
@@ -1039,8 +1046,6 @@ static int mcp3564_parse_fw_children(struct iio_dev *indio_dev)
 		return dev_err_probe(dev, -ENOMEM, "Can't allocate memory\n");
 
 	device_for_each_child_node(dev, child) {
-		node_name = fwnode_get_name(child);
-
 		if (fwnode_property_present(child, "diff-channels")) {
 			ret = fwnode_property_read_u32_array(child,
 							     "diff-channels",
@@ -1064,7 +1069,7 @@ static int mcp3564_parse_fw_children(struct iio_dev *indio_dev)
 			return dev_err_probe(&indio_dev->dev, -EINVAL,
 					     "Channel index > %d, for %s\n",
 					     MCP3564_INTERNAL_VCM + 1,
-					     node_name);
+					     __func__);
 		}
 
 		chanspec.address = (inputs[0] << 4) | inputs[1];
@@ -1226,7 +1231,7 @@ static int mcp3564_config(struct iio_dev *indio_dev)
 		 * If failed to identify the hardware based on internal registers,
 		 * try using fallback compatible in device tree to deal with some newer part number.
 		 */
-		adc->chip_info = spi_get_device_match_data(adc->spi);
+		adc->chip_info = &mcp3564_chip_infos_tbl[mcp3564];
 		if (!adc->chip_info) {
 			dev_id = spi_get_device_id(adc->spi);
 			adc->chip_info = (const struct mcp3564_chip_info *)dev_id->driver_data;
@@ -1408,19 +1413,15 @@ static struct attribute_group mcp3564r_attribute_group = {
 
 static const struct iio_info mcp3564_info = {
 	.read_raw = mcp3564_read_raw,
-	.read_avail = mcp3564_read_avail,
 	.write_raw = mcp3564_write_raw,
 	.write_raw_get_fmt = mcp3564_write_raw_get_fmt,
-	.read_label = mcp3564_read_label,
 	.attrs = &mcp3564_attribute_group,
 };
 
 static const struct iio_info mcp3564r_info = {
 	.read_raw = mcp3564_read_raw,
-	.read_avail = mcp3564_read_avail,
 	.write_raw = mcp3564_write_raw,
 	.write_raw_get_fmt = mcp3564_write_raw_get_fmt,
-	.read_label = mcp3564_read_label,
 	.attrs = &mcp3564r_attribute_group,
 };
 
@@ -1492,6 +1493,7 @@ static const struct of_device_id mcp3564_dt_ids[] = {
 	{ .compatible = "microchip,mcp3564r", .data = &mcp3564_chip_infos_tbl[mcp3564r] },
 	{ }
 };
+
 MODULE_DEVICE_TABLE(of, mcp3564_dt_ids);
 
 static const struct spi_device_id mcp3564_id[] = {
