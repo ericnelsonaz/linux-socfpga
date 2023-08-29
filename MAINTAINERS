@@ -7719,6 +7719,13 @@ W:	https://linuxtv.org
 S:	Maintained
 F:	drivers/media/radio/radio-maxiradio*
 
+MICROCHIP MCP3564 ADC DRIVER
+M:      Marius Cristea <marius.cristea@microchip.com>
+L:      linux-iio@vger.kernel.org
+S:      Supported
+F:      Documentation/devicetree/bindings/iio/adc/microchip,mcp3564.yaml
+F:      drivers/iio/adc/mcp3564.c
+
 MCP4531 MICROCHIP DIGITAL POTENTIOMETER DRIVER
 M:	Peter Rosin <peda@axentia.se>
 L:	linux-iio@vger.kernel.org
