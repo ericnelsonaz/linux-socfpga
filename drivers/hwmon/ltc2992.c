@@ -16,6 +16,21 @@
 #include <linux/property.h>
 #include <linux/regmap.h>
 
+/**
+ * assign_bit - Assign value to a bit in memory
+ * @nr: the bit to set
+ * @addr: the address to start counting from
+ * @value: the value to assign
+ */
+static __always_inline void assign_bit(long nr, volatile unsigned long *addr,
+				       bool value)
+{
+	if (value)
+		set_bit(nr, addr);
+	else
+		clear_bit(nr, addr);
+}
+
 #define LTC2992_CTRLB			0x01
 #define LTC2992_FAULT1			0x03
 #define LTC2992_POWER1			0x05
@@ -231,32 +246,6 @@ static int ltc2992_gpio_get(struct gpio_chip *chip, unsigned int offset)
 	return !test_bit(LTC2992_GPIO_BIT(offset), &gpio_status);
 }
 
-static int ltc2992_gpio_get_multiple(struct gpio_chip *chip, unsigned long *mask,
-				     unsigned long *bits)
-{
-	struct ltc2992_state *st = gpiochip_get_data(chip);
-	unsigned long gpio_status;
-	unsigned int gpio_nr;
-	int reg;
-
-	mutex_lock(&st->gpio_mutex);
-	reg = ltc2992_read_reg(st, LTC2992_GPIO_STATUS, 1);
-	mutex_unlock(&st->gpio_mutex);
-
-	if (reg < 0)
-		return reg;
-
-	gpio_status = reg;
-
-	gpio_nr = 0;
-	for_each_set_bit_from(gpio_nr, mask, LTC2992_GPIO_NR) {
-		if (test_bit(LTC2992_GPIO_BIT(gpio_nr), &gpio_status))
-			set_bit(gpio_nr, bits);
-	}
-
-	return 0;
-}
-
 static void ltc2992_gpio_set(struct gpio_chip *chip, unsigned int offset, int value)
 {
 	struct ltc2992_state *st = gpiochip_get_data(chip);
@@ -328,7 +317,6 @@ static int ltc2992_config_gpio(struct ltc2992_state *st)
 	st->gc.names = st->gpio_names;
 	st->gc.ngpio = ARRAY_SIZE(st->gpio_names);
 	st->gc.get = ltc2992_gpio_get;
-	st->gc.get_multiple = ltc2992_gpio_get_multiple;
 	st->gc.set = ltc2992_gpio_set;
 	st->gc.set_multiple = ltc2992_gpio_set_multiple;
 
@@ -386,12 +374,10 @@ static umode_t ltc2992_is_visible(const void *data, enum hwmon_sensor_types type
 		case hwmon_power_input:
 		case hwmon_power_input_lowest:
 		case hwmon_power_input_highest:
-		case hwmon_power_min_alarm:
 		case hwmon_power_max_alarm:
 			if (st->r_sense_uohm[channel])
 				return 0444;
 			break;
-		case hwmon_power_min:
 		case hwmon_power_max:
 			if (st->r_sense_uohm[channel])
 				return 0644;
@@ -666,13 +652,9 @@ static int ltc2992_read_power(struct device *dev, u32 attr, int channel, long *v
 	case hwmon_power_input_highest:
 		reg = LTC2992_POWER_MAX(channel);
 		break;
-	case hwmon_power_min:
-		reg = LTC2992_POWER_MIN_THRESH(channel);
-		break;
 	case hwmon_power_max:
 		reg = LTC2992_POWER_MAX_THRESH(channel);
 		break;
-	case hwmon_power_min_alarm:
 	case hwmon_power_max_alarm:
 		return ltc2992_read_power_alarm(st, channel, val, attr);
 	default:
@@ -763,9 +745,6 @@ static int ltc2992_write_power(struct device *dev, u32 attr, int channel, long v
 	u32 reg;
 
 	switch (attr) {
-	case hwmon_power_min:
-		reg = LTC2992_POWER_MIN_THRESH(channel);
-		break;
 	case hwmon_power_max:
 		reg = LTC2992_POWER_MAX_THRESH(channel);
 		break;
@@ -857,10 +836,10 @@ static const struct hwmon_channel_info ltc2992_curr = {
 };
 
 static const u32 ltc2992_power_config[] = {
-	HWMON_P_INPUT | HWMON_P_INPUT_LOWEST | HWMON_P_INPUT_HIGHEST | HWMON_P_MIN | HWMON_P_MAX |
-	HWMON_P_MIN_ALARM | HWMON_P_MAX_ALARM,
-	HWMON_P_INPUT | HWMON_P_INPUT_LOWEST | HWMON_P_INPUT_HIGHEST | HWMON_P_MIN | HWMON_P_MAX |
-	HWMON_P_MIN_ALARM | HWMON_P_MAX_ALARM,
+	HWMON_P_INPUT | HWMON_P_INPUT_LOWEST | HWMON_P_INPUT_HIGHEST | HWMON_P_MAX |
+	HWMON_P_MAX_ALARM,
+	HWMON_P_INPUT | HWMON_P_INPUT_LOWEST | HWMON_P_INPUT_HIGHEST | HWMON_P_MAX |
+	HWMON_P_MAX_ALARM,
 	0
 };
 
@@ -890,27 +869,30 @@ static const struct regmap_config ltc2992_regmap_config = {
 
 static int ltc2992_parse_dt(struct ltc2992_state *st)
 {
-	struct fwnode_handle *fwnode;
-	struct fwnode_handle *child;
+	struct device_node *node;
+	struct i2c_client *client = st->client;
 	u32 addr;
 	u32 val;
 	int ret;
 
-	fwnode = dev_fwnode(&st->client->dev);
+	if (!client->dev.of_node
+	    || !of_get_next_child(client->dev.of_node, NULL))
+		return -EINVAL;
 
-	fwnode_for_each_available_child_node(fwnode, child) {
-		ret = fwnode_property_read_u32(child, "reg", &addr);
-		if (ret < 0) {
-			fwnode_handle_put(child);
-			return ret;
+	for_each_child_of_node(client->dev.of_node, node) {
+		if (of_property_read_u32(node, "reg", &addr)) {
+			dev_err(&client->dev, "invalid reg on %s\n",
+				node->full_name);
+			continue;
 		}
 
 		if (addr > 1) {
-			fwnode_handle_put(child);
+			dev_err(&client->dev, "invalid reg %d on %s\n",
+				addr, node->full_name);
 			return -EINVAL;
 		}
 
-		ret = fwnode_property_read_u32(child, "shunt-resistor-micro-ohms", &val);
+		ret = of_property_read_u32(node, "shunt-resistor-micro-ohms", &val);
 		if (!ret)
 			st->r_sense_uohm[addr] = val;
 	}
