@@ -309,7 +309,7 @@ static const struct ad5686_chip_info ad5686_chip_info_tbl[] = {
 };
 
 
-static int ad5686_probe(struct spi_device *spi)
+int ad5686_probe(struct spi_device *spi)
 {
 	struct ad5686_state *st;
 	struct iio_dev *indio_dev;
@@ -372,7 +372,7 @@ error_disable_reg:
 	return ret;
 }
 
-static int ad5686_remove(struct spi_device *spi)
+int ad5686_remove(struct spi_device *spi)
 {
 	struct iio_dev *indio_dev = spi_get_drvdata(spi);
 	struct ad5686_state *st = iio_priv(indio_dev);
