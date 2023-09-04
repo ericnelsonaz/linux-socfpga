@@ -107,6 +107,17 @@
 		#interrupt-cells = <1>;
 		interrupt-controller;
 	};
+
+	spij_stdio: spij@100 {
+		compatible = "kcrocker,spij-stdio";
+		reg = <0x0100 0x18>;
+	};
+
+	spij_snoop: spij_snoop@200 {
+		compatible = "kcrocker,spij-snoop";
+		reg = <0x0200 0x14>;
+		interrupts = <6 IRQ_TYPE_LEVEL_HIGH>;
+	};
 };
 
 &mmc {
