@@ -1668,4 +1668,10 @@ endmenu
 config SERIAL_MCTRL_GPIO
 	tristate
 
+config SERIAL_SPIJ
+	tristate "SPI Journal UART support"
+	select SERIAL_CORE
+	help
+	  Select this to include support for Ken Crocker's SPI logging adapter VHDL device.
+	
 endif # TTY
