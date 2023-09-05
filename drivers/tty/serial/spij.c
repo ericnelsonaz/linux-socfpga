@@ -182,13 +182,18 @@ static u_int spij_get_mctrl(struct uart_port *port)
 static void spij_stop_tx(struct uart_port *port)
 {
 	dev_dbg(port->dev, "%s\n", __func__);
+	/* disable TX ready interrupt */
+	spij_clrbits(port, SPI_JOURNAL_INT_ENA_REG,
+		     SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK);
 }
 
 static void spij_start_tx(struct uart_port *port)
 {
-	struct spij_uart_port *spij_port = to_spij_uart_port(port);
 	dev_dbg(port->dev, "%s\n", __func__);
-        tasklet_schedule(&spij_port->tasklet_tx);
+
+	/* enable TX ready interrupt */
+	spij_setbits(port, SPI_JOURNAL_INT_ENA_REG,
+		     SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK);
 }
 
 static void spij_stop_rx(struct uart_port *port)
@@ -435,7 +440,7 @@ static irqreturn_t spij_int(int irq, void *dev_id)
 	struct spij_uart_port *spij_port = dev_id;
 	u32 stat = spij_uart_readl(&spij_port->uart, SPI_JOURNAL_INT_STAT_REG);
 
-	pr_err("%s: 0x08%x\n", __func__, stat);
+	dev_dbg(spij_port->uart.dev, "%s: 0x08%x\n", __func__, stat);
 
 	if (stat & SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK) {
                 tasklet_schedule(&spij_port->tasklet_tx);
