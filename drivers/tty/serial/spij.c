@@ -184,7 +184,7 @@ static void spij_stop_tx(struct uart_port *port)
 	dev_dbg(port->dev, "%s\n", __func__);
 	/* disable TX ready interrupt */
 	spij_clrbits(port, SPI_JOURNAL_INT_ENA_REG,
-		     SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK);
+		     SPI_JOURNAL_INT_ENA_STDOUT_READY_ENA_MSK);
 }
 
 static void spij_start_tx(struct uart_port *port)
@@ -193,7 +193,7 @@ static void spij_start_tx(struct uart_port *port)
 
 	/* enable TX ready interrupt */
 	spij_setbits(port, SPI_JOURNAL_INT_ENA_REG,
-		     SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK);
+		     SPI_JOURNAL_INT_ENA_STDOUT_READY_ENA_MSK);
 }
 
 static void spij_stop_rx(struct uart_port *port)
@@ -272,7 +272,7 @@ static void spij_tx_chars(struct uart_port *port)
 	if (!uart_circ_empty(xmit)) {
 		/* enable TX ready interrupt */
 		spij_setbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
-			     SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK);
+			     SPI_JOURNAL_INT_ENA_STDOUT_READY_ENA_MSK);
 	}
 }
 
@@ -464,6 +464,7 @@ static irqreturn_t spij_int(int irq, void *dev_id)
 		dev_info(spij_port->uart.dev, "rx ovfl\n");
 		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
                              SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK);
+		spij_port->uart.icount.buf_overrun++;
 	}
 
 	return IRQ_HANDLED;
