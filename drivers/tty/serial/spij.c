@@ -219,7 +219,7 @@ static void spij_tasklet_rx_func(unsigned long data)
 				u8 rx = bytes & 0xff;
 				if (uart_handle_sysrq_char(port, rx))
 					continue;
-				if (tty_insert_flip_char(&port->state->port, rx, 0) == 0)
+				if (tty_insert_flip_char(&port->state->port, rx, TTY_NORMAL) == 0)
 					port->icount.buf_overrun++;
 				else
 					port->icount.rx++;
