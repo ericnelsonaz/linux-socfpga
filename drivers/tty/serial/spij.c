@@ -461,7 +461,7 @@ static irqreturn_t spij_int(int irq, void *dev_id)
 	}
 
 	if (stat & SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK) {
-		dev_info(spij_port->uart.dev, "rx ovfl\n");
+		dev_dbg(spij_port->uart.dev, "rx ovfl\n");
 		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
                              SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK);
 		spij_port->uart.icount.buf_overrun++;
