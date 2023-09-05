@@ -228,6 +228,9 @@ static void spij_tasklet_rx_func(unsigned long data)
 		}
 	}
 
+	spij_setbits(port, SPI_JOURNAL_INT_ENA_REG,
+                     SPI_JOURNAL_INT_ENA_STDIN_READY_ENA_MSK);
+
 	tty_flip_buffer_push(&port->state->port);
 	spin_unlock(&port->lock);
 }
