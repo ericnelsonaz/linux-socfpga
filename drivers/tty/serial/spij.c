@@ -206,8 +206,26 @@ static void spij_tasklet_rx_func(unsigned long data)
 	struct uart_port *port = (struct uart_port *)data;
 
 	dev_dbg(port->dev, "%s\n", __func__);
+
 	/* The interrupt handler does not take the lock */
 	spin_lock(&port->lock);
+
+	while (spij_uart_readl(port, SPI_JOURNAL_INT_STAT_REG) & SPI_JOURNAL_INT_STAT_STDIN_READY_INT_MSK) {
+		u32 bytes = readl(port->membase + SPI_JOURNAL_STDIO_DATA_REG);
+		while (bytes) {
+			if (bytes & 0xFF) {
+				u8 rx = bytes & 0xff;
+				if (uart_handle_sysrq_char(port, rx))
+					continue;
+				if (tty_insert_flip_char(&port->state->port, rx, 0) == 0)
+					port->icount.buf_overrun++;
+				else
+					port->icount.rx++;
+			}
+			bytes >>= 8;
+		}
+	}
+
 	spin_unlock(&port->lock);
 }
 
