@@ -199,6 +199,8 @@ static void spij_start_tx(struct uart_port *port)
 static void spij_stop_rx(struct uart_port *port)
 {
 	dev_dbg(port->dev, "%s\n", __func__);
+	spij_clrbits(port, SPI_JOURNAL_INT_ENA_REG,
+                     SPI_JOURNAL_INT_ENA_STDIN_READY_ENA_MSK);
 }
 
 static void spij_tasklet_rx_func(unsigned long data)
@@ -226,6 +228,7 @@ static void spij_tasklet_rx_func(unsigned long data)
 		}
 	}
 
+	tty_flip_buffer_push(&port->state->port);
 	spin_unlock(&port->lock);
 }
 
@@ -309,8 +312,10 @@ static int spij_startup(struct uart_port *port)
 	struct spij_uart_port *spij_port = to_spij_uart_port(port);
 	dev_dbg(port->dev, "%s\n", __func__);
 	spij_setbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
-		     SPI_JOURNAL_INT_ENA_STDOUT_OVFLW_ENA_MSK
+                     SPI_JOURNAL_INT_ENA_STDIN_READY_ENA_MSK
+		     |SPI_JOURNAL_INT_ENA_STDOUT_OVFLW_ENA_MSK
 		     |SPI_JOURNAL_INT_ENA_STDIN_OVFLW_ENA_MSK);
+
 	tasklet_init(&spij_port->tasklet_rx, spij_tasklet_rx_func,
 			(unsigned long)port);
 	tasklet_init(&spij_port->tasklet_tx, spij_tasklet_tx_func,
