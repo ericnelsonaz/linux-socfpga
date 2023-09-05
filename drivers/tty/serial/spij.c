@@ -135,24 +135,22 @@ to_spij_uart_port(struct uart_port *uart)
 
 static inline u32 spij_uart_readl(struct uart_port *port, u32 reg)
 {
-	return __raw_readl(port->membase + reg);
+	return readl(port->membase + reg);
 }
 
 static inline void spij_uart_writel(struct uart_port *port, u32 reg, u32 value)
 {
-	__raw_writel(value, port->membase + reg);
+	writel(value, port->membase + reg);
 }
 
 static inline void spij_setbits(struct uart_port *port, u32 reg, u32 mask)
 {
-	__raw_writel(__raw_readl(port->membase + reg) | mask,
-		     port->membase + reg);
+	writel(readl(port->membase + reg) | mask, port->membase + reg);
 }
 
 static inline void spij_clrbits(struct uart_port *port, u32 reg, u32 mask)
 {
-	__raw_writel(__raw_readl(port->membase + reg) & ~mask,
-		     port->membase + reg);
+	writel(readl(port->membase + reg) & ~mask, port->membase + reg);
 }
 
 static u_int spij_tx_empty(struct uart_port *port)
@@ -211,13 +209,13 @@ static void spij_tasklet_rx_func(unsigned long data)
 static inline void spij_uart_write_char(struct uart_port *port, u8 value)
 {
 	dev_dbg(port->dev, "%s: %c\n", __func__, value);
-	__raw_writel(value, port->membase + SPI_JOURNAL_STDIO_DATA_REG);
+	writel(value, port->membase + SPI_JOURNAL_STDIO_DATA_REG);
 }
 
 static void spij_uart_write_bytes(struct uart_port *port, u32 bytes)
 {
 	dev_dbg(port->dev, "%s: %c\n", __func__, bytes);
-	__raw_writel(bytes, port->membase + SPI_JOURNAL_STDIO_DATA_REG);
+	writel(bytes, port->membase + SPI_JOURNAL_STDIO_DATA_REG);
 }
 
 static void spij_tx_chars(struct uart_port *port)
