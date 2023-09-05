@@ -27,6 +27,88 @@
 #include <linux/irq.h>
 #include <linux/suspend.h>
 
+/*==============================================================================
+ * Register Macro Definitions
+ *============================================================================*/
+#define SPI_JOURNAL_CSR_REG				0
+
+#define SPI_JOURNAL_CSR_TX_EN_MSK			(0x1)
+#define SPI_JOURNAL_CSR_TX_EN_OFST			(0)
+#define SPI_JOURNAL_CSR_TX_SCLR_MSK			(0x2)
+#define SPI_JOURNAL_CSR_TX_SCLR_OFST			(1)
+#define SPI_JOURNAL_CSR_RX_EN_MSK			(0x4)
+#define SPI_JOURNAL_CSR_RX_EN_OFST			(2)
+#define SPI_JOURNAL_CSR_RX_SCLR_MSK			(0x8)
+#define SPI_JOURNAL_CSR_RX_SCLR_OFST			(3)
+#define SPI_JOURNAL_CSR_BINARY_MSK			(0x10)
+#define SPI_JOURNAL_CSR_BINARY_OFST			(4)
+#define SPI_JOURNAL_CSR_TGT_SUPPLIES_TS_MSK		(0x20)
+#define SPI_JOURNAL_CSR_TGT_SUPPLIES_TS_OFST		(5)
+#define SPI_JOURNAL_CSR_FREE_RUN_CLOCK_MSK		(0x40)
+#define SPI_JOURNAL_CSR_FREE_RUN_CLOCK_OFST		(6)
+#define SPI_JOURNAL_CSR_MOSI_IS_SINGLE_MSK		(0x80)
+#define SPI_JOURNAL_CSR_MOSI_IS_SINGLE_OFST		(7)
+#define SPI_JOURNAL_CSR_CLOCK_ACTIVE_CYCLES_MSK		(0xF00)
+#define SPI_JOURNAL_CSR_CLOCK_ACTIVE_CYCLES_OFST	(8)
+#define SPI_JOURNAL_CSR_CLOCK_INACTIVE_CYCLES_MSK	(0xF000)
+#define SPI_JOURNAL_CSR_CLOCK_INACTIVE_CYCLES_OFST	(12)
+#define SPI_JOURNAL_CSR_USR_WRITES_BLOCK_MSK		(0x10000)
+#define SPI_JOURNAL_CSR_USR_WRITES_BLOCK_OFST		(16)
+#define SPI_JOURNAL_CSR_USR_READS_BLOCK_MSK		(0x20000)
+#define SPI_JOURNAL_CSR_USR_READS_BLOCK_OFST		(17)
+
+#define SPI_JOURNAL_INT_STAT_REG			4
+
+#define SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK	(0x1)
+#define SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_OFST	(0)
+#define SPI_JOURNAL_INT_STAT_STDIN_READY_INT_MSK	(0x2)
+#define SPI_JOURNAL_INT_STAT_STDIN_READY_INT_OFST	(1)
+#define SPI_JOURNAL_INT_STAT_STDOUT_OVFLW_INT_MSK	(0x4)
+#define SPI_JOURNAL_INT_STAT_STDOUT_OVFLW_INT_OFST	(2)
+#define SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK	(0x8)
+#define SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_OFST	(3)
+#define SPI_JOURNAL_INT_STAT_USR_TX_READY_INT_MSK	(0x10)
+#define SPI_JOURNAL_INT_STAT_USR_TX_READY_INT_OFST	(4)
+#define SPI_JOURNAL_INT_STAT_USR_RX_READY_INT_MSK	(0x20)
+#define SPI_JOURNAL_INT_STAT_USR_RX_READY_INT_OFST	(5)
+#define SPI_JOURNAL_INT_STAT_USR_TX_OVFLW_INT_MSK	(0x40)
+#define SPI_JOURNAL_INT_STAT_USR_TX_OVFLW_INT_OFST	(6)
+#define SPI_JOURNAL_INT_STAT_USR_RX_OVFLW_INT_MSK	(0x80)
+#define SPI_JOURNAL_INT_STAT_USR_RX_OVFLW_INT_OFST	(7)
+
+#define SPI_JOURNAL_INT_ENA_REG				8
+
+#define SPI_JOURNAL_INT_ENA_STDOUT_READY_ENA_MSK	(0x1)
+#define SPI_JOURNAL_INT_ENA_STDOUT_READY_ENA_OFST	(0)
+#define SPI_JOURNAL_INT_ENA_STDIN_READY_ENA_MSK		(0x2)
+#define SPI_JOURNAL_INT_ENA_STDIN_READY_ENA_OFST	(1)
+#define SPI_JOURNAL_INT_ENA_STDOUT_OVFLW_ENA_MSK	(0x4)
+#define SPI_JOURNAL_INT_ENA_STDOUT_OVFLW_ENA_OFST	(2)
+#define SPI_JOURNAL_INT_ENA_STDIN_OVFLW_ENA_MSK		(0x8)
+#define SPI_JOURNAL_INT_ENA_STDIN_OVFLW_ENA_OFST	(3)
+#define SPI_JOURNAL_INT_ENA_USR_TX_READY_ENA_MSK	(0x10)
+#define SPI_JOURNAL_INT_ENA_USR_TX_READY_ENA_OFST	(4)
+#define SPI_JOURNAL_INT_ENA_USR_RX_READY_ENA_MSK	(0x20)
+#define SPI_JOURNAL_INT_ENA_USR_RX_READY_ENA_OFST	(5)
+#define SPI_JOURNAL_INT_ENA_USR_TX_OVFLW_ENA_MSK	(0x40)
+#define SPI_JOURNAL_INT_ENA_USR_TX_OVFLW_ENA_OFST	(6)
+#define SPI_JOURNAL_INT_ENA_USR_RX_OVFLW_ENA_MSK	(0x80)
+#define SPI_JOURNAL_INT_ENA_USR_RX_OVFLW_ENA_OFST	(7)
+
+#define SPI_JOURNAL_STDIO_DATA_REG			0x0c
+#define SPI_JOURNAL_STDIO_DATA_RX_Q_MSK			(0xFF)
+#define SPI_JOURNAL_STDIO_DATA_RX_Q_OFST		(0)
+#define SPI_JOURNAL_STDIO_DATA_TX_Q_MSK			(0xFFFFFFFF)
+#define SPI_JOURNAL_STDIO_DATA_TX_Q_OFST		(0)
+
+#define SPI_JOURNAL_USER_DATA_REG			0x10
+#define SPI_JOURNAL_SP_REG				0x14
+
+#define SPIJ_TXT_TX_RDY         0x1
+#define SPIJ_TXT_RX_RDY         0x2
+#define SPIJ_PKT_TX_RDY         0x3
+#define SPIJ_PKT_RX_RDY         0x8
+
 struct spij_uart_port {
 	struct uart_port	uart;		/* uart */
 	spinlock_t		lock_tx;	/* port lock */
@@ -61,10 +143,25 @@ static inline void spij_uart_writel(struct uart_port *port, u32 reg, u32 value)
 	__raw_writel(value, port->membase + reg);
 }
 
+static inline void spij_setbits(struct uart_port *port, u32 reg, u32 mask)
+{
+	__raw_writel(__raw_readl(port->membase + reg) | mask,
+		     port->membase + reg);
+}
+
+static inline void spij_clrbits(struct uart_port *port, u32 reg, u32 mask)
+{
+	__raw_writel(__raw_readl(port->membase + reg) & ~mask,
+		     port->membase + reg);
+}
+
 static u_int spij_tx_empty(struct uart_port *port)
 {
-	pr_info("%s\n", __func__);
-	return 0;
+	dev_dbg(port->dev, "%s\n", __func__);
+
+	return (spij_uart_readl(port, SPI_JOURNAL_INT_STAT_REG)
+		& SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK)
+		? TIOCSER_TEMT : 0;
 }
 
 /*
@@ -72,7 +169,7 @@ static u_int spij_tx_empty(struct uart_port *port)
  */
 static void spij_set_mctrl(struct uart_port *port, u_int mctrl)
 {
-	pr_info("%s\n", __func__);
+	dev_dbg(port->dev, "%s\n", __func__);
 }
 
 /*
@@ -80,47 +177,139 @@ static void spij_set_mctrl(struct uart_port *port, u_int mctrl)
  */
 static u_int spij_get_mctrl(struct uart_port *port)
 {
-	pr_info("%s\n", __func__);
+	dev_dbg(port->dev, "%s\n", __func__);
 	return 0;
 }
 
 static void spij_stop_tx(struct uart_port *port)
 {
-	pr_info("%s\n", __func__);
+	dev_dbg(port->dev, "%s\n", __func__);
 }
 
 static void spij_start_tx(struct uart_port *port)
 {
-	pr_info("%s\n", __func__);
+	struct spij_uart_port *spij_port = to_spij_uart_port(port);
+	dev_dbg(port->dev, "%s\n", __func__);
+        tasklet_schedule(&spij_port->tasklet_tx);
 }
 
 static void spij_stop_rx(struct uart_port *port)
 {
-	pr_info("%s\n", __func__);
+	dev_dbg(port->dev, "%s\n", __func__);
+}
+
+static void spij_tasklet_rx_func(unsigned long data)
+{
+	struct uart_port *port = (struct uart_port *)data;
+
+	dev_dbg(port->dev, "%s\n", __func__);
+	/* The interrupt handler does not take the lock */
+	spin_lock(&port->lock);
+	spin_unlock(&port->lock);
+}
+
+static inline void spij_uart_write_char(struct uart_port *port, u8 value)
+{
+	dev_dbg(port->dev, "%s: %c\n", __func__, value);
+	__raw_writel(value, port->membase + SPI_JOURNAL_STDIO_DATA_REG);
+}
+
+static void spij_uart_write_bytes(struct uart_port *port, u32 bytes)
+{
+	dev_dbg(port->dev, "%s: %c\n", __func__, bytes);
+	__raw_writel(bytes, port->membase + SPI_JOURNAL_STDIO_DATA_REG);
+}
+
+static void spij_tx_chars(struct uart_port *port)
+{
+	struct circ_buf *xmit = &port->state->xmit;
+	struct spij_uart_port *spij_port = to_spij_uart_port(port);
+	u32 bytesout;
+	u32 shiftout;
+
+	dev_dbg(port->dev, "%s\n", __func__);
+
+	if (port->x_char &&
+	    (spij_uart_readl(port, SPI_JOURNAL_INT_STAT_REG) & SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK)) {
+		spij_uart_write_char(port, port->x_char);
+		port->icount.tx++;
+		port->x_char = 0;
+	}
+
+	if (uart_circ_empty(xmit) || uart_tx_stopped(port))
+		return;
+
+	bytesout = 0;
+	shiftout = 24;
+
+	while (spij_uart_readl(port, SPI_JOURNAL_INT_STAT_REG) & SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK) {
+
+		bytesout |= (xmit->buf[xmit->tail] << shiftout);
+		if (0 == shiftout) {
+                        spij_uart_write_bytes(port, bytesout);
+			shiftout = 24;
+			bytesout = 0;
+		} else {
+			shiftout -= 8;
+		}
+
+		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
+		port->icount.tx++;
+
+		if (uart_circ_empty(xmit))
+			break;
+	}
+
+	if (24 != shiftout)
+		spij_uart_write_bytes(port, bytesout);
+
+	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
+		uart_write_wakeup(port);
+
+	if (!uart_circ_empty(xmit)) {
+		/* enable TX ready interrupt */
+		spij_setbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+			     SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK);
+	}
+}
+
+static void spij_tasklet_tx_func(unsigned long data)
+{
+	struct uart_port *port = (struct uart_port *)data;
+
+	/* The interrupt handler does not take the lock */
+	spin_lock(&port->lock);
+        spij_tx_chars(port);
+	spin_unlock(&port->lock);
 }
 
 static int spij_startup(struct uart_port *port)
 {
-	pr_info("%s\n", __func__);
+	struct spij_uart_port *spij_port = to_spij_uart_port(port);
+	dev_dbg(port->dev, "%s\n", __func__);
+	tasklet_init(&spij_port->tasklet_rx, spij_tasklet_rx_func,
+			(unsigned long)port);
+	tasklet_init(&spij_port->tasklet_tx, spij_tasklet_tx_func,
+			(unsigned long)port);
 	return 0;
 }
 
 static void spij_shutdown(struct uart_port *port)
 {
-	pr_info("%s\n", __func__);
+	dev_dbg(port->dev, "%s\n", __func__);
 }
 
 static void spij_flush_buffer(struct uart_port *port)
 {
 	struct spij_uart_port *spij_port = to_spij_uart_port(port);
-	pr_info("%s\n", __func__);
+	dev_dbg(port->dev, "%s\n", __func__);
 	spij_port->tx_len = 0;
 }
 
 static void spij_set_termios(struct uart_port *port, struct ktermios *termios,
 			      struct ktermios *old)
 {
-	pr_info("%s\n", __func__);
+	dev_dbg(port->dev, "%s\n", __func__);
 }
 
 static const char *spij_type(struct uart_port *port)
@@ -150,50 +339,32 @@ static void spij_release_port(struct uart_port *port)
 static int spij_request_port(struct uart_port *port)
 {
 	struct platform_device *pdev = to_platform_device(port->dev);
-	int size = pdev->resource[0].end - pdev->resource[0].start + 1;
+	struct resource *res;
+	void __iomem *base;
 
-	if (!request_mem_region(port->mapbase, size, "spij_serial"))
-		return -EBUSY;
-
-	if (port->flags & UPF_IOREMAP) {
-		port->membase = ioremap(port->mapbase, size);
-		if (port->membase == NULL) {
-			release_mem_region(port->mapbase, size);
-			return -ENOMEM;
-		}
+	res = platform_get_resource(pdev, IORESOURCE_MEM, 0);
+	base = devm_ioremap_resource(&pdev->dev, res);
+	if (IS_ERR(base)) {
+		pr_err("%s: error mapping 0x%x\n", __func__, res->start);
+		return PTR_ERR(base);
 	}
+
+	dev_dbg(port->dev, "%s: map 0x%x to 0x%x\n", __func__, res->start, (unsigned)base);
+	port->mapbase = res->start;
+	port->membase = base;
+	port->iotype = UPIO_MEM;
 
 	return 0;
 }
 
 static void spij_config_port(struct uart_port *port, int flags)
 {
-	struct platform_device *pdev = to_platform_device(port->dev);
-	int size = pdev->resource[0].end - pdev->resource[0].start + 1;
-
-pr_info("%s: %d: %x: %u\n", __func__, flags, port->mapbase, size);
+	dev_dbg(port->dev, "%s: %d: %x\n", __func__, flags, port->mapbase);
 
 	if (flags & UART_CONFIG_TYPE) {
 		port->type = PORT_ATMEL;
-	
-		if (!request_mem_region(port->mapbase, size, "spi_journal")) {
-			pr_err("%s: error requesting memory\r\n", __func__);
-			return;
-		}
-pr_info("%s: have memory region\n", __func__);
-		if (port->flags & UPF_IOREMAP) {
-			port->membase = ioremap(port->mapbase, size);
-pr_info("%s: ioremap %p\n", __func__, port->membase);
-			if (port->membase == NULL) {
-				pr_err("%s: ioremap error\r\n", __func__);
-				release_mem_region(port->mapbase, size);
-			}
-		} else {
-pr_info("%s: ioremap not needed\n", __func__);
-		}
+		spij_request_port(port);
 	}
-
-pr_info("%s: returning\n", __func__);
 }
 
 static const struct uart_ops spij_pops = {
@@ -216,8 +387,9 @@ static const struct uart_ops spij_pops = {
 /*
  * Configure the port from the platform device resource info.
  */
-static int spij_init_port(struct spij_uart_port *spij_port,
-				      struct platform_device *pdev)
+static int spij_init_port
+	(struct spij_uart_port *spij_port,
+	 struct platform_device *pdev)
 {
 	struct uart_port *port = &spij_port->uart;
 
@@ -227,7 +399,7 @@ static int spij_init_port(struct spij_uart_port *spij_port,
 	port->fifosize	= 1;
 	port->dev	= &pdev->dev;
 	port->mapbase	= pdev->resource[0].start;
-	port->irq	= pdev->resource[1].start;
+        port->irq	= platform_get_irq(pdev, 0);
 
 	return 0;
 }
@@ -260,6 +432,40 @@ static int spij_serial_resume(struct platform_device *pdev)
 	return 0;
 }
 
+static irqreturn_t spij_int(int irq, void *dev_id)
+{
+	struct spij_uart_port *spij_port = dev_id;
+	u32 stat = spij_uart_readl(&spij_port->uart, SPI_JOURNAL_INT_STAT_REG);
+
+	pr_err("%s: 0x08%x\n", __func__, stat);
+
+	if (stat & SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK) {
+                tasklet_schedule(&spij_port->tasklet_tx);
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+			     SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK);
+	}
+
+	if (stat & SPI_JOURNAL_INT_STAT_STDIN_READY_INT_MSK) {
+                tasklet_schedule(&spij_port->tasklet_rx);
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+			     SPI_JOURNAL_INT_STAT_STDIN_READY_INT_MSK);
+	}
+
+	if (stat & SPI_JOURNAL_INT_STAT_STDOUT_OVFLW_INT_MSK) {
+		dev_info(spij_port->uart.dev, "tx ovfl\n");
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+                             SPI_JOURNAL_INT_STAT_STDOUT_OVFLW_INT_MSK);
+	}
+
+	if (stat & SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK) {
+		dev_info(spij_port->uart.dev, "rx ovfl\n");
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+                             SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK);
+	}
+
+	return IRQ_HANDLED;
+}
+
 static int spij_serial_probe(struct platform_device *pdev)
 {
 	struct spij_uart_port *spij_port;
@@ -274,14 +480,19 @@ static int spij_serial_probe(struct platform_device *pdev)
 	if (ret)
 		goto err_clear_bit;
 
-pr_info("%s: about to add uart\n", __func__);
-
 	ret = uart_add_one_port(&spij_uart, &spij_port->uart);
 	if (ret)
 		goto err_add_port;
 
 	device_init_wakeup(&pdev->dev, 1);
 	platform_set_drvdata(pdev, spij_port);
+
+	ret = devm_request_irq(&pdev->dev, spij_port->uart.irq,
+			       spij_int, 0, dev_name(&pdev->dev),
+			       spij_port);
+	if (ret)
+		dev_err(&pdev->dev, "%s: error %d requesting irq\n",
+			__func__, ret);
 
 	return 0;
 
