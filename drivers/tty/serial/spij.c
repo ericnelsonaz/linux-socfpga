@@ -137,6 +137,7 @@ struct spij_uart_port {
 	/* pkt data */
 	struct cdev cdev;
 	struct device *chrdev;
+	wait_queue_head_t prqueue;
 	wait_queue_head_t pwqueue;
 };
 
@@ -512,7 +513,7 @@ static irqreturn_t spij_int(int irq, void *dev_id)
 	if (stat & SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK) {
 		dev_dbg(spij_port->uart.dev, "rx ovfl\n");
 		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
-                             SPI_JOURNAL_INT_ENA_STDIN_OVFLW_ENA_MSK);
+                             SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK);
 		spij_port->uart.icount.buf_overrun++;
 	}
 
@@ -522,17 +523,58 @@ static irqreturn_t spij_int(int irq, void *dev_id)
 		wake_up(&spij_port->pwqueue);
 	}
 
+	if (stat & SPI_JOURNAL_INT_STAT_USR_RX_READY_INT_MSK) {
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+			     SPI_JOURNAL_INT_ENA_USR_RX_READY_ENA_MSK);
+		wake_up(&spij_port->prqueue);
+	}
+
 	return IRQ_HANDLED;
+}
+
+static inline int pkt_rx_rdy(struct uart_port *port)
+{
+	return 0 != (spij_uart_readl(port, SPI_JOURNAL_INT_STAT_REG)
+		        & SPI_JOURNAL_INT_STAT_USR_RX_READY_INT_MSK);
 }
 
 static ssize_t pkt_read
 	(struct file *file, char __user *buf,
 	 size_t count, loff_t *ppos)
 {
-	struct spij_uart_port *sport = (struct spij_uart_port *)file->private_data;;
+	struct spij_uart_port *sport = (struct spij_uart_port *)file->private_data;
+	struct uart_port *port = &sport->uart;
+	u32 longwords[4];
+	u32 i, num_lw;
+	int retval;
 
-	dev_dbg(sport->chrdev, "%s\n", __func__);
-	return 0;
+	if ((12 != count) && (16 != count))
+		return -EINVAL;
+
+	num_lw = count / 4;
+
+	if (!pkt_rx_rdy(port) && !(file->f_flags & O_NONBLOCK)) {
+		spij_setbits(port, SPI_JOURNAL_INT_ENA_REG,
+			     SPI_JOURNAL_INT_ENA_USR_RX_READY_ENA_MSK);
+		wait_event_interruptible(sport->prqueue, pkt_rx_rdy(port));
+	}
+
+	spin_lock(&port->lock);
+
+	if (pkt_rx_rdy(port)) {
+		i=0;
+		while ((i < num_lw) && pkt_rx_rdy(port)) {
+			longwords[i++] = spij_uart_readl(port, SPI_JOURNAL_USER_DATA_REG);
+		}
+		retval = i*4;
+		*ppos += retval;
+	} else {
+		retval = -EINTR;
+	}
+
+	spin_unlock(&port->lock);
+
+	return retval;
 }
 
 static inline int pkt_tx_rdy(struct uart_port *port)
@@ -623,6 +665,7 @@ static int spij_serial_probe(struct platform_device *pdev)
 
 	spij_port = &g_spij_port;
 	spij_port->uart.line = 0;
+	init_waitqueue_head(&spij_port->prqueue);
 	init_waitqueue_head(&spij_port->pwqueue);
 
 	atomic_set(&spij_port->tasklet_shutdown, 0);
