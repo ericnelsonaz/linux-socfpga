@@ -16,6 +16,8 @@
 #include <linux/console.h>
 #include <linux/sysrq.h>
 #include <linux/tty_flip.h>
+#include <linux/module.h>
+#include <linux/mod_devicetable.h>
 #include <linux/platform_device.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
@@ -109,6 +111,19 @@
 #define SPIJ_PKT_TX_RDY         0x3
 #define SPIJ_PKT_RX_RDY         0x8
 
+#define PKT_DRIVER_NAME "spijpkt"
+
+static char *spijpkt_devnode(struct device *dev, umode_t *mode)
+{
+	if (mode)
+		*mode = S_IRUGO | S_IWUGO;
+	return kasprintf(GFP_KERNEL, "%s", PKT_DRIVER_NAME);
+}
+
+static int spijpkt_major;
+static dev_t spijpkt_devnum;
+static struct class *spijpkt_class;
+
 struct spij_uart_port {
 	struct uart_port	uart;		/* uart */
 	spinlock_t		lock_tx;	/* port lock */
@@ -118,6 +133,11 @@ struct spij_uart_port {
 	atomic_t		tasklet_shutdown;
 	unsigned int		tx_len;
 	struct timer_list	uart_timer;
+
+	/* pkt data */
+	struct cdev cdev;
+	struct device *chrdev;
+	wait_queue_head_t pwqueue;
 };
 
 static struct spij_uart_port g_spij_port;
@@ -492,12 +512,109 @@ static irqreturn_t spij_int(int irq, void *dev_id)
 	if (stat & SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK) {
 		dev_dbg(spij_port->uart.dev, "rx ovfl\n");
 		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
-                             SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK);
+                             SPI_JOURNAL_INT_ENA_STDIN_OVFLW_ENA_MSK);
 		spij_port->uart.icount.buf_overrun++;
+	}
+
+	if (stat & SPI_JOURNAL_INT_STAT_USR_TX_READY_INT_MSK) {
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+			     SPI_JOURNAL_INT_ENA_USR_TX_READY_ENA_MSK);
+		wake_up(&spij_port->pwqueue);
 	}
 
 	return IRQ_HANDLED;
 }
+
+static ssize_t pkt_read
+	(struct file *file, char __user *buf,
+	 size_t count, loff_t *ppos)
+{
+	struct spij_uart_port *sport = (struct spij_uart_port *)file->private_data;;
+
+	dev_dbg(sport->chrdev, "%s\n", __func__);
+	return 0;
+}
+
+static inline int pkt_tx_rdy(struct uart_port *port)
+{
+	return 0 != (spij_uart_readl(port, SPI_JOURNAL_INT_STAT_REG)
+		        & SPI_JOURNAL_INT_STAT_USR_TX_READY_INT_MSK);
+}
+
+static ssize_t pkt_write
+	(struct file *file, const char __user *data, size_t len, loff_t *offs)
+{
+	struct spij_uart_port *sport = (struct spij_uart_port *)file->private_data;
+	struct uart_port *port = &sport->uart;
+	u32 longwords[4];
+	u32 i, num_lw;
+	int retval;
+
+	if ((12 != len) && (16 != len))
+		return -EINVAL;
+
+	num_lw = len / 4;
+
+	if (copy_from_user(longwords, data, len))
+		return -EFAULT;
+
+	if (!pkt_tx_rdy(port) && !(file->f_flags & O_NONBLOCK)) {
+		spij_setbits(port, SPI_JOURNAL_INT_ENA_REG,
+			     SPI_JOURNAL_INT_ENA_USR_TX_READY_ENA_MSK);
+		wait_event_interruptible(sport->pwqueue, pkt_tx_rdy(port));
+	}
+
+	spin_lock(&port->lock);
+
+	if (pkt_tx_rdy(port)) {
+		for (i=0; i < num_lw; i++)
+			spij_uart_writel(port, SPI_JOURNAL_USER_DATA_REG, longwords[i]);
+		retval = len;
+	} else {
+		retval = -EINTR;
+	}
+
+	spin_unlock(&port->lock);
+
+	return retval;
+}
+
+static unsigned int pkt_poll(struct file *file, struct poll_table_struct *table)
+{
+	struct spij_uart_port *sport = (struct spij_uart_port *)file->private_data;;
+
+	dev_dbg(sport->chrdev, "%s\n", __func__);
+	return 0;
+}
+
+static int pkt_open(struct inode *inode, struct file *file)
+{
+	struct spij_uart_port *sport;
+
+	sport = container_of(inode->i_cdev, struct spij_uart_port, cdev);
+	dev_dbg(sport->chrdev, "%s: %px/%px\n", __func__, sport, &g_spij_port);
+	file->private_data = sport;
+
+	return 0;
+}
+
+static int pkt_release(struct inode *inode, struct file *file)
+{
+	struct spij_uart_port *sport;
+
+	sport = container_of(inode->i_cdev, struct spij_uart_port, cdev);
+	dev_dbg(sport->chrdev, "%s\n", __func__);
+	return 0;
+}
+
+static struct file_operations const pkt_fops = {
+	.owner = THIS_MODULE,
+	.read = pkt_read,
+	.write = pkt_write,
+	.poll = pkt_poll,
+	.open = pkt_open,
+	.release = pkt_release,
+};
 
 static int spij_serial_probe(struct platform_device *pdev)
 {
@@ -506,31 +623,48 @@ static int spij_serial_probe(struct platform_device *pdev)
 
 	spij_port = &g_spij_port;
 	spij_port->uart.line = 0;
+	init_waitqueue_head(&spij_port->pwqueue);
 
 	atomic_set(&spij_port->tasklet_shutdown, 0);
 
 	ret = spij_init_port(spij_port, pdev);
 	if (ret)
-		goto err_clear_bit;
+		goto out;
 
 	ret = uart_add_one_port(&spij_uart, &spij_port->uart);
 	if (ret)
-		goto err_add_port;
+		goto out;
 
 	device_init_wakeup(&pdev->dev, 1);
-	platform_set_drvdata(pdev, spij_port);
 
 	ret = devm_request_irq(&pdev->dev, spij_port->uart.irq,
 			       spij_int, 0, dev_name(&pdev->dev),
 			       spij_port);
-	if (ret)
+	if (ret) {
 		dev_err(&pdev->dev, "%s: error %d requesting irq\n",
 			__func__, ret);
+		goto out;
+	}
 
-	return 0;
+	cdev_init(&spij_port->cdev, &pkt_fops);
+	spij_port->cdev.owner = THIS_MODULE;
+	spij_port->cdev.ops = &pkt_fops;
 
-err_add_port:
-err_clear_bit:
+	ret = cdev_add(&spij_port->cdev, spijpkt_devnum, 1);
+	if (ret < 0) {
+		dev_err(&pdev->dev, "%s: couldn't add device: err %d\n",
+			PKT_DRIVER_NAME, ret);
+		goto out;
+	}
+
+	spij_port->chrdev = device_create(spijpkt_class, &platform_bus,
+					  spijpkt_devnum, 0, "%s",
+					  PKT_DRIVER_NAME);
+	platform_set_drvdata(pdev, spij_port);
+
+	pr_info("%s: spijpkt device created\n", __func__);
+
+out:
 	return ret;
 }
 
@@ -574,14 +708,44 @@ static int __init spij_serial_init(void)
 {
 	int ret;
 
+	spijpkt_class = class_create(THIS_MODULE, "spijpkt");
+	if (IS_ERR(spijpkt_class)) {
+		ret = PTR_ERR(spijpkt_class);
+		goto out;
+	}
+
+	spijpkt_class->devnode = spijpkt_devnode;
+	ret = alloc_chrdev_region(&spijpkt_devnum, 0, 1, PKT_DRIVER_NAME);
+	if (ret < 0) {
+		pr_err("%s: couldn't alloc chrdevs: err %d\n",
+		       PKT_DRIVER_NAME, ret);
+		goto fail_chrdev;
+	}
+	spijpkt_major = MAJOR(spijpkt_devnum);
+
+	pr_info("spijpkt class created\n");
+
 	ret = uart_register_driver(&spij_uart);
 	if (ret)
-		return ret;
+		goto fail_platform;
 
 	ret = platform_driver_register(&spij_serial_driver);
 	if (ret)
-		uart_unregister_driver(&spij_uart);
+		goto fail_class;
 
+	goto out;
+
+fail_class:
+	uart_unregister_driver(&spij_uart);
+
+fail_platform:
+	unregister_chrdev_region(spijpkt_devnum, 1);
+
+fail_chrdev:
+	class_destroy(spijpkt_class);
+	spijpkt_class = 0;
+out:
 	return ret;
 }
+
 device_initcall(spij_serial_init);
