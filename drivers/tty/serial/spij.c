@@ -338,7 +338,9 @@ static int spij_startup(struct uart_port *port)
 	spij_setbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
                      SPI_JOURNAL_INT_ENA_STDIN_READY_ENA_MSK
 		     |SPI_JOURNAL_INT_ENA_STDOUT_OVFLW_ENA_MSK
-		     |SPI_JOURNAL_INT_ENA_STDIN_OVFLW_ENA_MSK);
+		     |SPI_JOURNAL_INT_ENA_STDIN_OVFLW_ENA_MSK
+		     |SPI_JOURNAL_INT_ENA_USR_TX_OVFLW_ENA_MSK
+		     |SPI_JOURNAL_INT_ENA_USR_RX_OVFLW_ENA_MSK);
 
 	tasklet_init(&spij_port->tasklet_rx, spij_tasklet_rx_func,
 			(unsigned long)port);
@@ -506,13 +508,13 @@ static irqreturn_t spij_int(int irq, void *dev_id)
 
 	if (stat & SPI_JOURNAL_INT_STAT_STDOUT_OVFLW_INT_MSK) {
 		dev_info(spij_port->uart.dev, "tx ovfl\n");
-		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_STAT_REG,
                              SPI_JOURNAL_INT_STAT_STDOUT_OVFLW_INT_MSK);
 	}
 
 	if (stat & SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK) {
 		dev_dbg(spij_port->uart.dev, "rx ovfl\n");
-		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_STAT_REG,
                              SPI_JOURNAL_INT_STAT_STDIN_OVFLW_INT_MSK);
 		spij_port->uart.icount.buf_overrun++;
 	}
@@ -527,6 +529,18 @@ static irqreturn_t spij_int(int irq, void *dev_id)
 		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_ENA_REG,
 			     SPI_JOURNAL_INT_ENA_USR_RX_READY_ENA_MSK);
 		wake_up(&spij_port->prqueue);
+	}
+
+	if (stat & SPI_JOURNAL_INT_STAT_USR_TX_OVFLW_INT_MSK) {
+		dev_info(spij_port->uart.dev, "pkt tx ovfl\n");
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_STAT_REG,
+                             SPI_JOURNAL_INT_STAT_USR_TX_OVFLW_INT_MSK);
+	}
+
+	if (stat & SPI_JOURNAL_INT_STAT_USR_RX_OVFLW_INT_MSK) {
+		dev_info(spij_port->uart.dev, "pkt rx ovfl\n");
+		spij_clrbits(&spij_port->uart, SPI_JOURNAL_INT_STAT_REG,
+                             SPI_JOURNAL_INT_STAT_USR_RX_OVFLW_INT_MSK);
 	}
 
 	return IRQ_HANDLED;
