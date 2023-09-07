@@ -135,8 +135,10 @@ struct spij_uart_port {
 	struct timer_list	uart_timer;
 
 	/* pkt data */
+	int dump_pkts;
 	struct cdev cdev;
 	struct device *chrdev;
+	unsigned packet_length;
 	wait_queue_head_t prqueue;
 	wait_queue_head_t pwqueue;
 };
@@ -558,14 +560,11 @@ static ssize_t pkt_read
 {
 	struct spij_uart_port *sport = (struct spij_uart_port *)file->private_data;
 	struct uart_port *port = &sport->uart;
-	u32 longwords[4];
-	u32 i, num_lw;
+	u32 longwords[3];
 	int retval;
 
-	if ((8 != count) && (12 != count))
+	if (count != sport->packet_length)
 		return -EINVAL;
-
-	num_lw = count / 4;
 
 	if (!pkt_rx_rdy(port) && !(file->f_flags & O_NONBLOCK)) {
 		spij_setbits(port, SPI_JOURNAL_INT_ENA_REG,
@@ -576,11 +575,22 @@ static ssize_t pkt_read
 	spin_lock(&port->lock);
 
 	if (pkt_rx_rdy(port)) {
-		i=0;
-		while ((i < num_lw) && pkt_rx_rdy(port)) {
-			longwords[i++] = spij_uart_readl(port, SPI_JOURNAL_USER_DATA_REG);
+		longwords[0] = spij_uart_readl(port, SPI_JOURNAL_USER_DATA_REG);
+		longwords[1] = spij_uart_readl(port, SPI_JOURNAL_USER_DATA_REG);
+		if (12 == count)
+			longwords[2] = spij_uart_readl(port, SPI_JOURNAL_USER_DATA_REG);
+		else
+			longwords[2] = 0;
+
+		if (sport->dump_pkts) {
+			if (8 == count)
+				dev_info(sport->chrdev, "-> 0x%08x 0x%08x\n",
+					 longwords[0], longwords[1]);
+			else
+				dev_info(sport->chrdev, "-> 0x%08x 0x%08x 0x%08x\n",
+					 longwords[0], longwords[1], longwords[2]);
 		}
-		retval = i*4;
+		retval = count;
 		*ppos += retval;
 	} else {
 		retval = -EINTR;
@@ -603,13 +613,10 @@ static ssize_t pkt_write
 	struct spij_uart_port *sport = (struct spij_uart_port *)file->private_data;
 	struct uart_port *port = &sport->uart;
 	u32 longwords[4];
-	u32 i, num_lw;
 	int retval;
 
-	if ((8 != len) && (12 != len))
+	if (len != sport->packet_length)
 		return -EINVAL;
-
-	num_lw = len / 4;
 
 	if (copy_from_user(longwords, data, len))
 		return -EFAULT;
@@ -623,9 +630,20 @@ static ssize_t pkt_write
 	spin_lock(&port->lock);
 
 	if (pkt_tx_rdy(port)) {
-		for (i=0; i < num_lw; i++)
-			spij_uart_writel(port, SPI_JOURNAL_USER_DATA_REG, longwords[i]);
+		spij_uart_writel(port, SPI_JOURNAL_USER_DATA_REG, longwords[0]);
+		spij_uart_writel(port, SPI_JOURNAL_USER_DATA_REG, longwords[1]);
+		if (len == 12)
+			spij_uart_writel(port, SPI_JOURNAL_USER_DATA_REG, longwords[2]);
+
 		retval = len;
+		if (sport->dump_pkts) {
+			if (8 == len)
+				dev_info(sport->chrdev, "-> 0x%08x 0x%08x\n",
+					 longwords[0], longwords[1]);
+			else
+				dev_info(sport->chrdev, "-> 0x%08x 0x%08x 0x%08x\n",
+					 longwords[0], longwords[1], longwords[2]);
+		}
 	} else {
 		retval = -EINTR;
 	}
@@ -672,6 +690,37 @@ static struct file_operations const pkt_fops = {
 	.release = pkt_release,
 };
 
+static ssize_t spij_dump_read
+	(struct device *dev,
+	 struct device_attribute *attr,
+	 char *buf)
+{
+	return sprintf(buf, "%d", g_spij_port.dump_pkts);
+}
+
+static ssize_t spij_dump_write
+	(struct device *dev,
+	 struct device_attribute *attr,
+	 const char *buf, size_t count)
+{
+	unsigned value;
+	int err;
+
+	err = kstrtouint(buf, 10, &value);
+	if (err) {
+		dev_err(dev, "%s: invalid value %d:%s\n", __func__, err, buf);
+		return -EINVAL;
+	}
+
+	g_spij_port.dump_pkts = value;
+
+	return count;
+}
+
+static DEVICE_ATTR(dump, S_IWUSR | S_IRUGO,
+		   spij_dump_read,
+		   spij_dump_write);
+
 static int spij_serial_probe(struct platform_device *pdev)
 {
 	struct spij_uart_port *spij_port;
@@ -681,6 +730,7 @@ static int spij_serial_probe(struct platform_device *pdev)
 	spij_port->uart.line = 0;
 	init_waitqueue_head(&spij_port->prqueue);
 	init_waitqueue_head(&spij_port->pwqueue);
+	spij_port->packet_length = 8;
 
 	atomic_set(&spij_port->tasklet_shutdown, 0);
 
@@ -719,7 +769,13 @@ static int spij_serial_probe(struct platform_device *pdev)
 					  PKT_DRIVER_NAME);
 	platform_set_drvdata(pdev, spij_port);
 
+	if (spij_uart_readl(&spij_port->uart, SPI_JOURNAL_CSR_REG) & SPI_JOURNAL_CSR_TGT_SUPPLIES_TS_MSK)
+		spij_port->packet_length += 4;
+
 	pr_info("%s: spijpkt device created\n", __func__);
+
+	ret = device_create_file(&pdev->dev, &dev_attr_dump);
+	dev_info(&pdev->dev, "%s: dump sysfs %d\n", __func__, ret);
 
 out:
 	return ret;
@@ -806,3 +862,4 @@ out:
 }
 
 device_initcall(spij_serial_init);
+MODULE_LICENSE("GPL");
