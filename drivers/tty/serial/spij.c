@@ -562,7 +562,7 @@ static ssize_t pkt_read
 	u32 i, num_lw;
 	int retval;
 
-	if ((12 != count) && (16 != count))
+	if ((8 != count) && (12 != count))
 		return -EINVAL;
 
 	num_lw = count / 4;
@@ -606,7 +606,7 @@ static ssize_t pkt_write
 	u32 i, num_lw;
 	int retval;
 
-	if ((12 != len) && (16 != len))
+	if ((8 != len) && (12 != len))
 		return -EINVAL;
 
 	num_lw = len / 4;
