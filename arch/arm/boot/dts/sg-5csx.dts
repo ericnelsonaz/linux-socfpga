@@ -43,8 +43,21 @@
 
 	/* current monitor */
 	ltc2992@0x6b {
-		compatible = "ltc2992";
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		compatible = "adi,ltc2992";
 		reg = <0x6b>;
+
+		channel@0 {
+			reg = <0x0>;
+			shunt-resistor-micro-ohms = <10000>;
+		};
+
+		channel@1 {
+			reg = <0x1>;
+			shunt-resistor-micro-ohms = <10000>;
+		};
 	};
 
 	/* Power Monitor */
