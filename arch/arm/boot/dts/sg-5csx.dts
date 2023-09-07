@@ -51,12 +51,12 @@
 
 		channel@0 {
 			reg = <0x0>;
-			shunt-resistor-micro-ohms = <10000>;
+			shunt-resistor-micro-ohms = <50000>;
 		};
 
 		channel@1 {
 			reg = <0x1>;
-			shunt-resistor-micro-ohms = <10000>;
+			shunt-resistor-micro-ohms = <50000>;
 		};
 	};
 
