@@ -726,6 +726,12 @@ static int spij_serial_probe(struct platform_device *pdev)
 	struct spij_uart_port *spij_port;
 	int ret = -ENODEV;
 
+	ret = device_create_file(&pdev->dev, &dev_attr_dump);
+	if (ret) {
+		dev_err(&pdev->dev, "error %d creating sysfs entry\n", ret);
+		goto out;
+	}
+
 	spij_port = &g_spij_port;
 	spij_port->uart.line = 0;
 	init_waitqueue_head(&spij_port->prqueue);
@@ -773,9 +779,6 @@ static int spij_serial_probe(struct platform_device *pdev)
 		spij_port->packet_length += 4;
 
 	pr_info("%s: spijpkt device created\n", __func__);
-
-	ret = device_create_file(&pdev->dev, &dev_attr_dump);
-	dev_info(&pdev->dev, "%s: dump sysfs %d\n", __func__, ret);
 
 out:
 	return ret;
