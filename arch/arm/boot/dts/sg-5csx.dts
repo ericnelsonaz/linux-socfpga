@@ -127,12 +127,15 @@
 	num-cs = <2>;
 	status = "okay";
 
+	/* ad5686 DAC */
 	spi@0 {
-		compatible = "cl,spidev";
+		compatible = "ad5686";
 		reg = <0>;
+		vcc-supply = <&regulator_3_3v>;
 		spi-max-frequency = <1000000>;
 	};
 
+	/* mcp3564 ADC */
 	spi@1 {
 		compatible = "cl,spidev";
 		reg = <1>;
