@@ -1160,7 +1160,7 @@ static int mcp3564_config(struct iio_dev *indio_dev)
 
 	adc->dev_addr = MCP3564_HW_ADDR_MASK & tmp;
 
-	dev_dbg(dev, "use device address %i\n", adc->dev_addr);
+	dev_info(dev, "use device address %i\n", adc->dev_addr);
 
 	ret = mcp3564_read_8bits(adc, MCP3564_RESERVED_C_REG, &tmp_reg);
 	if (ret < 0)
@@ -1242,7 +1242,7 @@ static int mcp3564_config(struct iio_dev *indio_dev)
 		adc->chip_info = &mcp3564_chip_infos_tbl[ids];
 	}
 
-	dev_dbg(dev, "Found %s chip\n", adc->chip_info->name);
+	dev_info(dev, "Found %s chip\n", adc->chip_info->name);
 
 	adc->vref = devm_regulator_get_optional(dev, "vref");
 	if (IS_ERR(adc->vref)) {
@@ -1252,7 +1252,7 @@ static int mcp3564_config(struct iio_dev *indio_dev)
 				return dev_err_probe(dev, PTR_ERR(adc->vref),
 					     "Unknown Vref\n");
 			adc->vref = NULL;
-			dev_dbg(dev, "%s: Using internal Vref\n", __func__);
+			dev_info(dev, "%s: Using internal Vref\n", __func__);
 		} else {
 			return dev_err_probe(dev, PTR_ERR(adc->vref),
 					     "failed to get regulator\n");
@@ -1267,7 +1267,7 @@ static int mcp3564_config(struct iio_dev *indio_dev)
 		if (ret)
 			return ret;
 
-		dev_dbg(dev, "%s: Using External Vref\n", __func__);
+		dev_info(dev, "%s: Using External Vref\n", __func__);
 
 		ret = regulator_get_voltage(adc->vref);
 		if (ret < 0) {
@@ -1455,7 +1455,7 @@ static int mcp3564_probe(struct spi_device *spi)
 				     "Can't configure MCP356X device\n");
 	}
 
-	dev_dbg(&spi->dev, "%s: Vref (mV): %d\n", __func__, adc->vref_mv);
+	dev_info(&spi->dev, "%s: Vref (mV): %d\n", __func__, adc->vref_mv);
 
 	mcp3564_fill_scale_tbls(adc);
 
