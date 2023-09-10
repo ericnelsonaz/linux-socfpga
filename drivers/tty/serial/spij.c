@@ -290,17 +290,14 @@ static void spij_tx_chars(struct uart_port *port)
 		return;
 
 	bytesout = 0;
-	shiftout = 24;
+	shiftout = 0;
 
 	while (spij_uart_readl(port, SPI_JOURNAL_INT_STAT_REG) & SPI_JOURNAL_INT_STAT_STDOUT_READY_INT_MSK) {
-
 		bytesout |= (xmit->buf[xmit->tail] << shiftout);
-		if (0 == shiftout) {
-                        spij_uart_write_bytes(port, bytesout);
-			shiftout = 24;
-			bytesout = 0;
-		} else {
-			shiftout -= 8;
+		shiftout += 8;
+		if (32 == shiftout) {
+			spij_uart_write_bytes(port, bytesout);
+			shiftout = bytesout = 0;
 		}
 
 		xmit->tail = (xmit->tail + 1) & (UART_XMIT_SIZE - 1);
@@ -310,7 +307,7 @@ static void spij_tx_chars(struct uart_port *port)
 			break;
 	}
 
-	if (24 != shiftout)
+	if (0 != shiftout)
 		spij_uart_write_bytes(port, bytesout);
 
 	if (uart_circ_chars_pending(xmit) < WAKEUP_CHARS)
