@@ -41,6 +41,11 @@
 	speed-mode = <0>;
 	status = "okay";
 
+	cat24@0x38 {
+		compatible = "atmel,24c256";
+		reg = <0x38>;
+	};
+
 	/* current monitor */
 	ltc2992@0x6b {
 		#address-cells = <1>;
