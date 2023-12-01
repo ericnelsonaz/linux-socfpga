@@ -41,6 +41,22 @@
 	speed-mode = <0>;
 	status = "okay";
 
+	/* GPIO expander */
+	pca9674a@20 {
+		compatible = "nxp,pca9674";
+		reg = <0x20>;
+
+		/* interrupt line is not connected
+		interrupt-parent = <&irqpin2>;
+		interrupts = <3 0>;
+		interrupt-controller;
+		#interrupt-cells = <2>;
+		*/
+
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+
 	cat24@0x38 {
 		compatible = "atmel,24c256";
 		reg = <0x38>;
@@ -71,24 +87,7 @@
 		reg = <0x6F>;
 	};
 
-	/* GPIO expander */
-	pca9674a@20 {
-		compatible = "nxp,pca9674";
-		reg = <0x20>;
-
-/*
-	interrupt line is not connected
-
-		interrupt-parent = <&irqpin2>;
-		interrupts = <3 0>;
-		interrupt-controller;
-		#interrupt-cells = <2>;
-*/
-
-		gpio-controller;
-		#gpio-cells = <2>;
-	};
-
+	/* real-time clock */
 	shtc1@70 {
 		compatible = "sensirion,shtc1";
 		reg = <0x70>;
