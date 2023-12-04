@@ -42,9 +42,9 @@
 	status = "okay";
 
 	/* GPIO expander */
-	pca9674a@20 {
+	pca9674a@38 {
 		compatible = "nxp,pca9674";
-		reg = <0x20>;
+		reg = <0x38>;
 
 		/* interrupt line is not connected
 		interrupt-parent = <&irqpin2>;
@@ -57,9 +57,9 @@
 		#gpio-cells = <2>;
 	};
 
-	cat24@0x38 {
+	cat24@0x50 {
 		compatible = "atmel,24c256";
-		reg = <0x38>;
+		reg = <0x50>;
 	};
 
 	/* current monitor */
