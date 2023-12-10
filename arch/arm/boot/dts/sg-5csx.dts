@@ -58,8 +58,9 @@
 	};
 
 	cat24@0x50 {
-		compatible = "atmel,24c256";
+		compatible = "24c16";
 		reg = <0x50>;
+		pagesize = <16>;
 	};
 
 	/* current monitor */
