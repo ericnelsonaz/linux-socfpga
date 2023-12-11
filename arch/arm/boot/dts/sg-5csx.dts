@@ -35,6 +35,10 @@
 			debounce-interval = <100>;
 		};
 	};
+
+	spi_gpio: spigp {
+		compatible = "spi-gpio";
+	};
 };
 
 &i2c1 {
@@ -152,8 +156,19 @@
 };
 
 &spi0 {
-	num-cs = <2>;
+	status = "disabled";
+};
+
+&spi_gpio {
 	status = "okay";
+	gpio-sck = <&portb 28 0>;
+	gpio-mosi = <&portc 0 0>;
+	gpio-miso = <&portc 1 0>;
+	num-chipselects = <2>;
+	cs-gpios = <&portc 2 0>,
+		   <&portc 3 0>;
+	#address-cells = <1>;
+	#size-cells = <0>;
 
 	/* ad5686 DAC */
 	spi@0 {
@@ -171,7 +186,7 @@
 		spi-cpha;
 		spi-cpol;
 
-		spi-max-frequency = <10000000>;
+		spi-max-frequency = <1000000>;
 		microchip,hw-device-address = <1>;
 
 		#address-cells = <1>;
